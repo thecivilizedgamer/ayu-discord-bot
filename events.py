@@ -1,6 +1,7 @@
 import asyncio
 import time
 
+from bot_data_store import BotData
 from client import Client
 from data_store import Data
 from handlers.command_handler import handle_command
@@ -20,6 +21,26 @@ async def on_ready():
 async def on_message(message):
     if message.content.startswith('!ayu'):
         await handle_command(message)
+
+
+@client.event
+async def on_raw_reaction_add(reaction):
+    if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
+        channel = await client.fetch_channel(reaction.channel_id)
+        message = await channel.fetch_message(reaction.message_id)
+        if message.id in BotData.reaction_subscribers[reaction.user_id]:
+            BotData.reaction_subscribers[reaction.user_id][message.id].put_nowait(
+                {'action': 'add', 'reaction': reaction})
+
+
+@client.event
+async def on_raw_reaction_remove(reaction):
+    if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
+        channel = await client.fetch_channel(reaction.channel_id)
+        message = await channel.fetch_message(reaction.message_id)
+        if message.id in BotData.reaction_subscribers[reaction.user_id]:
+            BotData.reaction_subscribers[reaction.user_id][message.id].put_nowait(
+                {'action': 'remove', 'reaction': reaction})
 
 
 async def timer_task():

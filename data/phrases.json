@@ -1,0 +1,23 @@
+{
+    "greeting": [
+        "Hi there!",
+        "Hello!",
+        "Hey there!",
+        "Hi!"
+    ],
+    "dm": [
+        "Have no fear, Ayu-chan is here! :D",
+        "_slides into DMs_",
+        "_A wild Ayu appears!_",
+        "Well howdy!",
+        "Fufufu, you're talking to a bot!"
+    ],
+    "timer": [
+        "~Meep meep meep~",
+        "~Beep beep beep~",
+        "~Ring ring ring~",
+        "~Ding ding ding~",
+        "Heeeeeey!",
+        "Guess what?"
+    ]
+}

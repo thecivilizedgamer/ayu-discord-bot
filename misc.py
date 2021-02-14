@@ -66,3 +66,30 @@ def capitalize(msg):
     if len(msg) > 0:
         msg = msg[0].upper() + msg[1:]
     return msg
+
+
+def hours_and_minutes_to_str(hours, minutes):
+    am_pm = 'AM'
+    if hours > 12:
+        hours -= 12
+        am_pm = 'PM'
+
+    time_str = str(hours) + ':'
+
+    if minutes == 0:
+        time_str += '00'
+    elif minutes < 9:
+        time_str += '0' + str(minutes)
+    else:
+        time_str += str(minutes)
+
+    return time_str + f' {am_pm}'
+
+
+def list_to_str(items):
+    items = [str(x) for x in items]
+
+    if len(items) == 1:
+        return items[0]
+
+    return ', '.join(items[:-1]) + f' and {items[-1]}'

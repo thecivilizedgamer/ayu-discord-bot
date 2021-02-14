@@ -1,0 +1,68 @@
+{
+    "remind_first": {
+        "images": [
+            "https://tenor.com/view/hi-wave-goodbye-bye-anime-gif-5634610"
+        ],
+        "messages": [
+            "All right, it's time to <action>!",
+            "It's that time of day again! <Action>",
+            "Guess what? It's time to <action>!",
+            "Senapi! Time to <action>!!",
+            "It's a great time to <action>!!"
+        ]
+    },
+    "remind_late": {
+        "images": [
+            "https://tenor.com/view/waiting-lean-on-the-glass-cute-funny-anime-gif-17856085",
+            "https://tenor.com/view/crying-anime-girl-gif-19520210",
+            "https://tenor.com/view/idont-know-non-non-biyori-gif-19951338",
+            "https://tenor.com/view/anime-fox-what-huh-late-gif-13447205",
+            "https://tenor.com/view/anime-girl-uhh-weird-strange-gif-10517455",
+            "https://tenor.com/view/anime-okay-then-meh-unamused-nom-gif-18015248",
+            "https://tenor.com/view/angel-beats-gif-5125793"
+        ],
+        "messages": [
+            "Hey! Listen! <Action>!",
+            "It's tiiiiime! <Action>",
+            "Hey, I'm talking to you!!! <Action>!!",
+            "Just in case you didn't already know... time to <action>!",
+            "Heeeeeeeeeey! <Action>!"
+        ]
+    },
+    "remind_very_late": {
+        "images": [
+            "https://tenor.com/view/nichijou-ona2000-anime-raining-rain-gif-13273260",
+            "https://tenor.com/view/tanaka-kun-gif-8368189",
+            "https://tenor.com/view/sad-face-tears-anime-cry-gif-13988059",
+            "https://tenor.com/view/anime-fox-what-huh-late-gif-13447205"
+        ],
+        "messages": [
+            "Notice me, senpai!! Notice meeeeeee and <action>!! :sob:",
+            "How many times do I have to repeat myself? <Action> :disappointed:",
+            "<Action> now! Just doooooo it!!!",
+            "You didn't <action> yet... I'm making a pouty sad face"
+        ]
+    },
+    "congratulate": {
+        "images": [
+            "https://tenor.com/view/chika-fujiwara-still-waiting-dance-gif-13990005",
+            "https://tenor.com/view/anime-girl-kawaii-sparkle-happy-gif-14223414",
+            "https://tenor.com/view/happy-anime-animation-love-cute-gif-12887287",
+            "https://tenor.com/view/smiling-thinking-happy-gif-14914056",
+            "https://tenor.com/view/anime-smile-excited-happy-gif-6013419",
+            "https://tenor.com/view/anime-happy-anime-excited-gif-19679255",
+            "https://tenor.com/view/good-job-lucky-star-anime-thumbs-up-gif-16065857",
+            "https://tenor.com/view/thumbsup-anime-smile-gif-9807877",
+            "https://tenor.com/view/cellsatwork-animation-cellplalets-clapping-applause-gif-15175127"
+        ],
+        "messages": [
+            "You did it!!!",
+            "I'm so proud of you, senpai!",
+            "Hooray!!",
+            "All right!!!",
+            "Good job, you did it!!!",
+            "Awesome job!!",
+            "_sounds of rejoicing_"
+        ]
+    }
+}
