@@ -6,8 +6,8 @@ class Enum:
 
 
 class Emoji(Enum):
-    CHECK = b'\xe2\x9c\x85'.decode()
-    X = u'\u274C'
+    CHECK_MARK = b'\xe2\x9c\x85'.decode()
+    X_MARK = u'\u274C'
 
     ZERO = b'\xef\xb8\x8f\xe2\x83\xa3'.decode()
     ONE = b'1\xef\xb8\x8f\xe2\x83\xa3'.decode()
@@ -20,34 +20,34 @@ class Emoji(Enum):
     EIGHT = b'8\xef\xb8\x8f\xe2\x83\xa3'.decode()
     NINE = b'9\xef\xb8\x8f\xe2\x83\xa3'.decode()
 
-    CLOCK = b'\xf0\x9f\x95\x92'
+    CLOCK = b'\xf0\x9f\x95\x92'.decode()
 
-    A = b'\xf0\x9f\x87\xa6'
-    B = b'\xf0\x9f\x87\xa7'
-    C = b'\xf0\x9f\x87\xa8'
-    D = b'\xf0\x9f\x87\xa9'
-    E = b'\xf0\x9f\x87\xaa'
-    F = b'\xf0\x9f\x87\xab'
-    G = b'\xf0\x9f\x87\xac'
-    H = b'\xf0\x9f\x87\xad'
-    I = b'\xf0\x9f\x87\xae'
-    J = b'\xf0\x9f\x87\xaf'
-    K = b'\xf0\x9f\x87\xb0'
-    L = b'\xf0\x9f\x87\xb1'
-    M = b'\xf0\x9f\x87\xb2'
-    N = b'\xf0\x9f\x87\xb3'
-    O = b'\xf0\x9f\x87\xb4'
-    P = b'\xf0\x9f\x87\xb5'
-    Q = b'\xf0\x9f\x87\xb6'
-    R = b'\xf0\x9f\x87\xb7'
-    S = b'\xf0\x9f\x87\xb8'
-    T = b'\xf0\x9f\x87\xb9'
-    U = b'\xf0\x9f\x87\xba'
-    V = b'\xf0\x9f\x87\xbb'
-    W = b'\xf0\x9f\x87\xbc'
-    X = b'\xf0\x9f\x87\xbd'
-    Y = b'\xf0\x9f\x87\xbe'
-    Z = b'\xf0\x9f\x87\xbf'
+    A = b'\xf0\x9f\x87\xa6'.decode()
+    B = b'\xf0\x9f\x87\xa7'.decode()
+    C = b'\xf0\x9f\x87\xa8'.decode()
+    D = b'\xf0\x9f\x87\xa9'.decode()
+    E = b'\xf0\x9f\x87\xaa'.decode()
+    F = b'\xf0\x9f\x87\xab'.decode()
+    G = b'\xf0\x9f\x87\xac'.decode()
+    H = b'\xf0\x9f\x87\xad'.decode()
+    I = b'\xf0\x9f\x87\xae'.decode()
+    J = b'\xf0\x9f\x87\xaf'.decode()
+    K = b'\xf0\x9f\x87\xb0'.decode()
+    L = b'\xf0\x9f\x87\xb1'.decode()
+    M = b'\xf0\x9f\x87\xb2'.decode()
+    N = b'\xf0\x9f\x87\xb3'.decode()
+    O = b'\xf0\x9f\x87\xb4'.decode()
+    P = b'\xf0\x9f\x87\xb5'.decode()
+    Q = b'\xf0\x9f\x87\xb6'.decode()
+    R = b'\xf0\x9f\x87\xb7'.decode()
+    S = b'\xf0\x9f\x87\xb8'.decode()
+    T = b'\xf0\x9f\x87\xb9'.decode()
+    U = b'\xf0\x9f\x87\xba'.decode()
+    V = b'\xf0\x9f\x87\xbb'.decode()
+    W = b'\xf0\x9f\x87\xbc'.decode()
+    X = b'\xf0\x9f\x87\xbd'.decode()
+    Y = b'\xf0\x9f\x87\xbe'.decode()
+    Z = b'\xf0\x9f\x87\xbf'.decode()
 
 
 class Days(Enum):
@@ -58,3 +58,15 @@ class Days(Enum):
     THURSDAY = "Thursday"
     FRIDAY = "Friday"
     SATURDAY = "Saturday"
+
+    @staticmethod
+    def ordered_days():
+        return [Days.SUNDAY, Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY, Days.FRIDAY, Days.SATURDAY]
+
+    @staticmethod
+    def str_to_int(day_str):
+        return Days.ordered_days().index(day_str)
+
+    @staticmethod
+    def int_to_str(day_int):
+        return Days.ordered_days()[day_int]

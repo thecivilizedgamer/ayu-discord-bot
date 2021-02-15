@@ -80,12 +80,24 @@ class Config(DataStore):
         DataStore.__init__(self, 'config.json')
 
     @property
-    def admin_user_id(self):
-        return self.data['admin_user_id']
+    def owner_user_id(self):
+        return self.data['owner_user_id']
 
     @property
     def bot_token(self):
         return self.data['bot_token']
+
+    @property
+    def debug_channel_id(self):
+        return self.data['debug_channel_id']
+
+    @property
+    def max_alarm_snooze_hours(self):
+        return self.data['max_alarm_snooze_hours']
+
+    @property
+    def alarm_snooze_sec(self):
+        return self.data['alarm_snooze_sec']
 
 
 class Data:

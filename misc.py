@@ -1,4 +1,7 @@
+import datetime
 import string
+
+from enums import Days
 
 
 def remove_trailing_punctuation(word):
@@ -152,5 +155,15 @@ def month_str_to_number(month_str):
 def get_alarm_description(alarm_name, days, times):
     description = f'{alarm_name} at '
     description += list_to_str([hours_and_minutes_to_str(x[0], x[1]) for x in times])
-    description += ' on ' + list_to_str([x + 's' for x in days])
+    description += ' on ' + list_to_str([Days.int_to_str(x) + 's' for x in days])
     return description
+
+
+def get_local_time_from_offset(offset_mins):
+    return datetime.datetime.utcnow() + datetime.timedelta(minutes=offset_mins)
+
+
+def get_formatted_datetime(date=None):
+    if date is None:
+        date = datetime.datetime.utcnow()
+    return date.strftime("%I:%M:%S %p on %b %m, %Y")

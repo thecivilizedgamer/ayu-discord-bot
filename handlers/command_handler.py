@@ -13,14 +13,16 @@ import traceback
 from datetime import timedelta
 
 from bot_data_store import ConvoSubscription
+from client import Client
 from data_store import Data
 from db import DB
 from enums import Days
-from interface import (get_menu_selections, get_next_response, get_yes_no,
-                       prompt)
-from misc import (capitalize, get_alarm_description, month_str_to_number,
-                  remove_all_punctuation, remove_trailing_punctuation,
-                  seconds_to_string, str_to_time, uncapitalize)
+from interface import (get_menu_selections, get_next_response,
+                       get_utc_offset_mins, get_yes_no, prompt)
+from misc import (capitalize, get_alarm_description, get_formatted_datetime,
+                  get_local_time_from_offset, remove_all_punctuation,
+                  remove_trailing_punctuation, seconds_to_string, str_to_time,
+                  uncapitalize)
 from user import User
 
 logger = logging.getLogger(__name__)
@@ -38,6 +40,9 @@ COMMAND_DESCRIPTIONS = {
     "delete alarm": "Delete an existing alarm"
 
 }
+
+
+client = Client.get_client()
 
 
 async def ping_command(message, command_arg):
@@ -127,7 +132,7 @@ async def timer_command(message, command_arg):
             delta += timedelta(seconds=val)
     end = time.time() + delta.total_seconds()
 
-    DB.add_timer(message.author.id, timer_name, end)
+    await DB.add_timer(message.author.id, timer_name, end)
     remaining_time_str = seconds_to_string(round(end - time.time()))
     await message.channel.send(f"OK, I'll tell you to {uncapitalize(timer_name)} in {remaining_time_str}!")
 
@@ -150,7 +155,7 @@ async def list_timers_command(message, command_arg):
 
 
 async def delete_timer_command(message, command_arg):
-    list_timers_command(message, None)
+    await list_timers_command(message, None)
     random_timer_name = random.choice(list(DB.get_timers(message.author.id).keys()))
     prompt_str = f"Which timer would you like to delete? For example, \"{random_timer_name}\""
     timer_name = await prompt(message.author.id, message.channel, prompt_str)
@@ -160,7 +165,7 @@ async def delete_timer_command(message, command_arg):
     if timer_name.lower() not in [x.lower() for x in DB.get_timers(message.author.id)]:
         await message.channel.send(f"You don't have a timer for that! Check your current timers with `!ayu list timers`")
     else:
-        DB.delete_timer(message.author.id, timer_name)
+        await DB.delete_timer(message.author.id, timer_name)
         await message.channel.send(f"Ok, I'll forget about that timer :)")
 
 
@@ -178,9 +183,9 @@ async def alarm_command(message, command_arg):
         await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
         return
 
+    if times.strip().startswith('at '):
+        times = times.strip()[3:]
     time_segments = times.replace('and', '').replace(',', '').split()
-    if time_segments.strip().startswith('at '):
-        time_segments = time_segments.strip()[3:]
 
     if len(time_segments) % 2 != 0:
         raise RuntimeError('Time args not divisible by 2')
@@ -193,57 +198,43 @@ async def alarm_command(message, command_arg):
         i += 2
 
     if DB.get_utc_time_offset_mins(message.author.id) is None:
-        local_time = await prompt(message.author.id, message.channel, "What's your current local "
-                                  "time? For example, 3:05 PM. This is the only time I'll ask!")
-        if local_time is None:
+        offset_mins = await get_utc_offset_mins(message.author.id, message.channel, message.created_at)
+        await DB.set_utc_time_offset_mins(message.author.id, offset_mins)
+    else:
+        local_time = get_local_time_from_offset(DB.get_utc_time_offset_mins(message.author.id))
+        confirmed = await get_yes_no(
+            message.author.id,
+            message.channel,
+            f"Based on what I know, I think your local time is {get_formatted_datetime(local_time)}. Is that right?")
+        if confirmed is None:
             await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
             return
-        local_hours, local_mins = str_to_time(local_time)
-
-        local_date = await prompt(message.author.id, message.channel, "And what's today's date? For example, \"Jan 19, 2021\"")
-        if local_date is None:
-            await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
-            return
-
-        month, day, year = remove_all_punctuation(local_date).split()
-        if len(year) < 4:
-            raise RuntimeError('Year must be 4 digits')
-
-        month = month_str_to_number(month)
-
-        local_time = datetime.datetime(int(year), month, int(day), local_hours, local_mins)
-        offset_mins = (local_time - message.created_at).total_seconds() / 60
-
-        # Round offset minutes to the nearest 15 min, since some timezones have
-        # weird 15-min offsets due to DST
-        offset_mins = 15 * round(offset_mins / 15)
-
-        expected_local_time = message.created_at + datetime.timedelta(minutes=offset_mins)
-        disparity_mins = (expected_local_time - local_time).total_seconds() / 15
-        if disparity_mins > 5:  # If off by more than 5 min, something must be wrong with the calculation
-            raise RuntimeError('Failed to infer correct UTC time offset')
-
-        DB.set_utc_time_offset_mins(message.author.id, offset_mins)
+        if not confirmed:
+            offset_mins = await get_utc_offset_mins(message.author.id, message.channel, message.created_at)
+            await DB.set_utc_time_offset_mins(message.author.id, offset_mins)
 
     days = await get_menu_selections(
         message.author.id,
         message.channel,
         "What days should the alarm go off? Select the numbers corresponding\n"
         "to the days you want, then select the checkmark when you're done!",
-        [Days.SUNDAY, Days.MONDAY, Days.TUESDAY, Days.WEDNESDAY, Days.THURSDAY, Days.FRIDAY, Days.SATURDAY])
+        Days.ordered_days())
 
     if days is None:
         await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
         return
 
-    alarm_data = {'times': normalized_times, 'days': days}
+    # Convert to ints
+    days = [Days.str_to_int(x) for x in days]
+
+    alarm_data = {'times': normalized_times, 'days': days, 'created_at': datetime.datetime.utcnow()}
 
     confirmed = await get_yes_no(
         message.author.id,
         message.channel,
         "I'm setting an alarm for you to " +
         get_alarm_description(uncapitalize(alarm_name), days, normalized_times) +
-        "! Does that look right? Select the check for yes, or the x for no!")
+        "! Does that look right?")
 
     if confirmed is None:
         await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
@@ -251,11 +242,11 @@ async def alarm_command(message, command_arg):
         await message.channel.send("Ok, if you still want to set an alarm then ask me again!")
     else:
         await message.channel.send(" All right, you're all set!")
-        DB.add_alarm(message.author.id, alarm_name, alarm_data)
+        await DB.add_alarm(message.author.id, alarm_name, alarm_data)
 
 
 async def delete_alarm_command(message, command_arg):
-    list_alarms_command(message, None)
+    await list_alarms_command(message, None)
     with ConvoSubscription(message.author.id, message.channel.id) as queue:
         random_alarm_name = random.choice(list(DB.get_alarms(message.author.id).keys()))
         await message.channel.send(f"Which alarm would you like to delete? For example, \"{random_alarm_name}\"")
@@ -263,7 +254,7 @@ async def delete_alarm_command(message, command_arg):
     if alarm_name.lower() not in [x.lower() for x in DB.get_alarms(message.author.id)]:
         await message.channel.send(f"You don't have an alarm for that! Check your current alarms with `!ayu list alarms`")
     else:
-        DB.delete_alarm(message.author.id, alarm_name)
+        await DB.delete_alarm(message.author.id, alarm_name)
         await message.channel.send(f"Ok, I'll forget about that alarm :)")
 
 
@@ -341,7 +332,7 @@ async def handle_command(message):
         if len(command_segments) > 1:
             command_arg = command_segments[1]
 
-        if first_word in admin_command_handlers and message.author.id == Data.config.admin_user_id:
+        if first_word in admin_command_handlers and message.author.id == Data.config.owner_user_id:
             await admin_command_handlers[first_word](message, command_arg)
         elif first_word in command_handlers:
             try:
@@ -364,8 +355,9 @@ async def handle_command(message):
                 try:
                     await val(message, command_arg)
                 except Exception:
-                    logger.warning('Failed while processing command {}: {}'.format(
-                        message.content, traceback.format_exc()))
+                    user = await User.get_user(message.author.id)
+                    await client.get_channel(Data.config.debug_channel_id).send(
+                        f'ERROR: Failed while processing command `{message.content}` from user {user}: ```{traceback.format_exc()}```')
                     await message.channel.send(
                         "I'm sorry, something went wrong! Double-check what you typed and try again?")
         else:
