@@ -178,9 +178,9 @@ async def alarm_command(message, command_arg):
         await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
         return
 
+    time_segments = times.replace('and', '').replace(',', '').split()
     if time_segments.strip().startswith('at '):
         time_segments = time_segments.strip()[3:]
-    time_segments = times.replace('and', '').replace(',', '').split()
 
     if len(time_segments) % 2 != 0:
         raise RuntimeError('Time args not divisible by 2')
