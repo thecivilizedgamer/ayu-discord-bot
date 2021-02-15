@@ -13,6 +13,32 @@ def remove_all_punctuation(msg):
     return msg
 
 
+def str_to_time(time_str, am_pm=None):
+    if am_pm is None:
+        time_str, am_pm = time_str.split(' ', maxsplit=1)
+    am_pm = am_pm.strip().lower()
+
+    if am_pm not in ['am', 'pm']:
+        raise RuntimeError('Invalid AM/PM specifier')
+
+    if ':' in time_str:
+        hours, mins = time_str.split(':')
+        hours = int(hours)
+        mins = int(mins)
+    else:
+        hours = int(time_str)
+        mins = 0
+    if hours > 12 or hours < 1:
+        raise RuntimeError('Invalid hour specified')
+    if mins > 59 or mins < 0:
+        raise RuntimeError('Invalid minutes specified')
+
+    if am_pm == 'pm':
+        hours += 12
+
+    return hours, mins
+
+
 def seconds_to_string(seconds):
     seconds = max(int(seconds), 0)
 
@@ -93,3 +119,38 @@ def list_to_str(items):
         return items[0]
 
     return ', '.join(items[:-1]) + f' and {items[-1]}'
+
+
+def month_str_to_number(month_str):
+    return {
+        'jan': 1,
+        'january': 1,
+        'feb': 2,
+        'february': 2,
+        'mar': 3,
+        'march': 3,
+        'apr': 4,
+        'april': 4,
+        'may': 5,
+        'jun': 6,
+        'june': 6,
+        'jul': 7,
+        'july': 7,
+        'aug': 8,
+        'august': 8,
+        'sep': 9,
+        'september': 9,
+        'oct': 10,
+        'october': 10,
+        'nov': 11,
+        'november': 11,
+        'dec': 12,
+        'december': 12
+    }[month_str.strip().lower()]
+
+
+def get_alarm_description(alarm_name, days, times):
+    description = f'{alarm_name} at '
+    description += list_to_str([hours_and_minutes_to_str(x[0], x[1]) for x in times])
+    description += ' on ' + list_to_str([x + 's' for x in days])
+    return description
