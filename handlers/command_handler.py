@@ -65,7 +65,7 @@ async def help_command(message, command_arg):
             "Hi, I'm Ayu! I'm here to help!\n\n"
             "Here's what I can do (make sure you say `!ayu` first!):"
             f"```{help_str}```\n"
-            "If you want to know how to use a single command, you can say `!ayu help <command>`\n\n"
+            "If you want to know about a single command, you can say `!ayu help <command>`\n\n"
             "I've also got a few hidden commands ^-^"
         )
     else:
