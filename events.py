@@ -96,6 +96,8 @@ async def alarm_task():
                             utc_hour = utc_day_min // 60
                             utc_min = utc_day_min % 60
 
+                            day %= 7
+
                             recent_alarm_datetime = datetime.datetime(now.year, now.month, now.day, utc_hour, utc_min)
                             while Days.str_to_int(recent_alarm_datetime.strftime('%A')) != day:
                                 recent_alarm_datetime -= datetime.timedelta(days=1)
