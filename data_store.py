@@ -99,6 +99,10 @@ class Config(DataStore):
     def alarm_snooze_sec(self):
         return self.data['alarm_snooze_sec']
 
+    @property
+    def pin_threshold(self):
+        return self.data['pin_threshold']
+
 
 class Data:
     images = Images()
@@ -112,8 +116,10 @@ class Data:
         Data.images._data = None
         Data.phrases._data = None
         Data.reminder_messages._data = None
+        Data.config._data = None
 
         # Force immediate reload
         _ = Data.images.data
         _ = Data.phrases.data
         _ = Data.reminder_messages.data
+        _ = Data.config.data

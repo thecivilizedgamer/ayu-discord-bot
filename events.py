@@ -36,6 +36,7 @@ async def on_message(message):
 @client.event
 async def on_raw_reaction_add(reaction):
     await check_if_alarm_was_acknowledged(reaction)
+    await handle_pins(reaction)
 
     # Handle reaction subscribers
     if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
@@ -141,3 +142,18 @@ async def check_if_alarm_was_acknowledged(reaction):
         if DB.alarm_is_ringing(*alarm_tuple):
             await DB.acknowledge_alarm(*alarm_tuple)
             await message.remove_reaction(Emoji.CHECK_MARK, client.user)
+
+
+async def handle_pins(reaction):
+    if reaction.emoji.name in [Emoji.PIN, Emoji.X_MARK]:
+        # Don't retrieve the message unless it will actually be needed
+        channel = await client.fetch_channel(reaction.channel_id)
+        message = await channel.fetch_message(reaction.message_id)
+
+    if reaction.emoji.name == Emoji.PIN:
+        for msg_reaction in message.reactions:
+            if msg_reaction.emoji == Emoji.PIN and msg_reaction.count >= Data.config.pin_threshold:
+                await message.pin()
+    elif reaction.emoji.name == Emoji.X_MARK and reaction.member.guild_permissions.administrator:
+        # Only allow admins to unpin messages
+        await message.unpin()

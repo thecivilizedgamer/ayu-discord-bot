@@ -8,6 +8,7 @@ class Enum:
 class Emoji(Enum):
     CHECK_MARK = b'\xe2\x9c\x85'.decode()
     X_MARK = u'\u274C'
+    PIN = u'\U0001F4CC'
 
     ZERO = b'\xef\xb8\x8f\xe2\x83\xa3'.decode()
     ONE = b'1\xef\xb8\x8f\xe2\x83\xa3'.decode()
