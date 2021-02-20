@@ -2,6 +2,8 @@ import json
 import os
 import random
 
+from misc import capitalize
+
 
 class DataStore:
     def __init__(self, data_file_path, catch_errors=False):
@@ -26,6 +28,25 @@ class DataStore:
         return self._data
 
 
+class Chat(DataStore):
+
+    def __init__(self):
+        DataStore.__init__(self, os.path.join('data', 'chat.json'), True)
+
+    @property
+    def response_map(self):
+        return self.data['response_map']
+
+
+class Quotes(DataStore):
+
+    def __init__(self):
+        DataStore.__init__(self, os.path.join('data', 'quotes.json'), True)
+
+    def get_quote(self):
+        return random.choice(self.data['quotes'])
+
+
 class Images(DataStore):
 
     def __init__(self):
@@ -39,14 +60,17 @@ class Phrases(DataStore):
     def __init__(self):
         DataStore.__init__(self, os.path.join('data', 'phrases.json'), True)
 
+    def get_phrase(self, phrase_key):
+        return random.choice(self.data[phrase_key]).replace('<bot_name>', Data.config.bot_name)
+
     def get_greeting_phrase(self):
-        return random.choice(self.data['greeting'])
+        return Phrases.get_phrase(self, 'greeting')
 
     def get_dm_message(self):
-        return random.choice(self.data['dm'])
+        return Phrases.get_phrase(self, 'dm')
 
     def get_timer_message(self):
-        return random.choice(self.data['timer'])
+        return Phrases.get_phrase(self, 'timer')
 
 
 class ReminderMessages(DataStore):
@@ -101,25 +125,30 @@ class Config(DataStore):
 
     @property
     def pin_threshold(self):
-        return self.data['pin_threshold']
+        return self.data['pin_threshold'],
+
+    @property
+    def command_word(self):
+        return self.data['command_word'].lower()
+
+    @property
+    def bot_name(self):
+        return self.data.get('bot_name', capitalize(self.command_word))
 
 
 class Data:
+    chat = Chat()
+    quotes = Quotes()
     images = Images()
     phrases = Phrases()
     reminder_messages = ReminderMessages()
+    config = Config()
 
-    config = Config()  # Never gets reloaded
+    all_stores = [chat, quotes, images, phrases, reminder_messages, config]
 
     @staticmethod
     def reload_all():
-        Data.images._data = None
-        Data.phrases._data = None
-        Data.reminder_messages._data = None
-        Data.config._data = None
-
-        # Force immediate reload
-        _ = Data.images.data
-        _ = Data.phrases.data
-        _ = Data.reminder_messages.data
-        _ = Data.config.data
+        for store in Data.all_stores:
+            # Clear and then reload
+            store._data = None
+            _ = store.data

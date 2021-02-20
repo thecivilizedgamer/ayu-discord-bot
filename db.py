@@ -13,15 +13,36 @@ from data_store import Data
 client = Client.get_client()
 
 
+DEFAULT_DB_SCHEMA = {
+    'bot': {
+        'ringing_alarms': {},
+        'acknowledged_alarms': [],
+        'alarm_message_mappings': {},
+        'administrators': {},
+        'enabled_features': {}
+    }
+}
+
+
+async def enforce_schema(document, schema):
+    # Loosely make sure that the data loaded from the save file matches the format we expect, although
+    # it's fine if there's new items in the schema that aren't in the save file
+    if not isinstance(document, type(schema)):
+        await client.get_channel(Data.config.debug_channel_id).send(
+            'ERROR: Found an inconsistency with the save file. '
+            'Please reconcile the inconsistency or delete the save file')
+        raise RuntimeError('Found an inconsistency in the save file')
+    if isinstance(schema, dict):
+        for key, val in schema.items():
+            if key in document:
+                await enforce_schema(document[key], val)
+            else:
+                document[key] = val
+
+
 class DB:
     save_queue = Queue(loop=client.loop)
-    db = {
-        'bot': {
-            'ringing_alarms': {},
-            'acknowledged_alarms': [],
-            'alarm_message_mappings': {}
-        }
-    }
+    db = DEFAULT_DB_SCHEMA
 
     @staticmethod
     def ensure_user_id(user_id):
@@ -47,19 +68,20 @@ class DB:
         await DB.save_queue.put(None)
 
     @staticmethod
-    async def load_from_disk():
+    async def load_from_disk(filename='save.dmp'):
         try:
-            with open('save.dmp', 'rb') as f:
+            with open(filename, 'rb') as f:
                 DB.db = pickle.load(f)
         except Exception:
             await client.get_channel(Data.config.debug_channel_id).send(
-                f'ERROR: Failed to load from save.dmp: ```{traceback.format_exc()}```')
+                f'ERROR: Failed to load from {filename}: ```{traceback.format_exc()}```')
             try:
-                with open('save.dmp.bak', 'rb') as f:
+                with open(f'{filename}.bak', 'rb') as f:
                     DB.db = pickle.load(f)
             except Exception:
                 await client.get_channel(Data.config.debug_channel_id).send(
-                    f'ERROR: Also failed to load backup save file: ```{traceback.format_exc()}```')
+                    f'ERROR: Also failed to load backup save file {filename}.bak: ```{traceback.format_exc()}```')
+        await enforce_schema(DB.db, DEFAULT_DB_SCHEMA)
 
     @staticmethod
     def get_utc_time_offset_mins(user_id):

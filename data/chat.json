@@ -1,0 +1,12 @@
+{
+    "response_map": {
+        "greeting": ["hi", "hello", "hey", "yo", "hiya", "greetings", "hola"],
+        "good_morning": ["good morning"],
+        "good_afternoon": ["good afternoon"],
+        "good_evening": ["good evening"],
+        "good_night": ["good night", "goodnight"],
+        "farewell": ["goodbye", "bye", "talk to you later", "see you"],
+        "wellness_query": ["how are you", "how have you been", "how do you feel"],
+        "gratitude": ["thanks", "thank you"]
+    }
+}

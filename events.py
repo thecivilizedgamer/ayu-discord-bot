@@ -2,9 +2,9 @@ import asyncio
 import datetime
 import time
 import traceback
-from asyncio.queues import QueueEmpty
 
-from bot_data_store import BotData, ReactionSubscription
+from bot_data_store import BotData
+from chat import get_responses
 from client import Client
 from data_store import Data
 from db import DB
@@ -24,19 +24,49 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    # Do profanity checks here, once implemented. Must be first
+    # Ignore own messages
+    if message.author.id == client.user.id:
+        return
+
+    # profanity_present = check_for_profanity(message)
+    # If profanity present, either report to mods (if that's enabled) or ignore the message
+
+    if message.guild is None:\
+            # For features that are only applicable in DMs
+        pass
+    else:
+        # For features that are only applicable in servers
+        pass
+
+        # Do profanity checks here, once implemented. Must be before processing commands
 
     if len(BotData.convo_subscribers.get(message.author.id, [])) > 0 and \
             message.channel.id in BotData.convo_subscribers[message.author.id]:
         BotData.convo_subscribers[message.author.id][message.channel.id].put_nowait(message)
-    elif message.content.startswith('!ayu'):
-        await handle_command(message)
+    else:
+        if message.content.startswith(f'!{Data.config.command_word}'):
+            await handle_command(message)
+        elif message.guild is None:
+            # If not sure what else to do with message, and if in DMs, then try to respond intelligently
+            responses = get_responses(message.content)
+            for response in responses:
+                await message.channel.send(response)
 
 
 @client.event
 async def on_raw_reaction_add(reaction):
-    await check_if_alarm_was_acknowledged(reaction)
-    await handle_pins(reaction)
+    # Ignore own reactions
+    if reaction.user_id == client.user.id:
+        return
+
+    if reaction.guild_id is None:
+        # For features that are only applicable in DMs
+        await check_if_alarm_was_acknowledged(reaction)
+    else:
+        # For features that are only applicable in servers
+        await handle_pins(reaction)
+
+    # For features that are applicable in both servers and DMs
 
     # Handle reaction subscribers
     if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
@@ -49,6 +79,10 @@ async def on_raw_reaction_add(reaction):
 
 @client.event
 async def on_raw_reaction_remove(reaction):
+    # Ignore own reactions
+    if reaction.user_id == client.user.id:
+        return
+
     if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
         channel = await client.fetch_channel(reaction.channel_id)
         message = await channel.fetch_message(reaction.message_id)

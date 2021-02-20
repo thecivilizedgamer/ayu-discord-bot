@@ -3,14 +3,67 @@
         "Hi there!",
         "Hello!",
         "Hey there!",
-        "Hi!"
+        "Hi!",
+        "Why, hello!",
+        "Howdy!"
+    ],
+    "good_morning": [
+        "~Ohayou gozaimasu~",
+        "Good morning!",
+        "Top of the morning to you!",
+        "Good morning! Let's make today a great day!",
+        "Good morning! Give it your all today!"
+
+    ],
+    "good_afternoon": [
+        "Good afternoon!",
+        "Good afternoon, make sure you eat a good lunch!",
+        "Good afternoon, make sure to drink plenty of water!"
+    ],
+    "good_evening": [
+        "Good evening!",
+        "Good evening, I hope today has gone well for you!",
+        "Good evening, I hope you're doing well!",
+        "Good evening, I hope your day has been productive!"
+    ],
+    "good_night": [
+        "Good night, sleep tight!",
+        "Good night, Have a good sleep!",
+        "Take care!",
+        "Try to get a solid 8 hours in!",
+        "Good night, sleep well!"
+    ],
+    "farewell": [
+        "Take care!",
+        "Goodbye, I'm right here if you need me! ^^",
+        "See you later!",
+        "Catch you later!",
+        "Goodbye, make good choices!",
+        "So long!",
+        "Until we meet again!",
+        "Take care of yourself, ok? You're totally worth it!",
+        "Take it easy! But not too easy!"
+    ],
+    "wellness_query": [
+        "I'm doing pretty well, thanks for asking!",
+        "I'm doing better than expected!",
+        "I'm doing great!",
+        "Today is going well for me!"
+    ],
+    "gratitude": [
+        "Anytime!",
+        "No problem, glad I can help!",
+        "You're very welcome!",
+        "Not a problem!",
+        "Always glad to help :)",
+        "Of course, let me know if you need anything else!",
+        "My pleasure!"
     ],
     "dm": [
-        "Have no fear, Ayu-chan is here! :D",
+        "Have no fear, <bot_name> is here! :D",
         "_slides into DMs_",
-        "_A wild Ayu appears!_",
-        "Well howdy!",
-        "Fufufu, you're talking to a bot!"
+        "_A wild <bot_name> appears!_",
+        "Well howdy!"
     ],
     "timer": [
         "~Meep meep meep~",
