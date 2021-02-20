@@ -8,5 +8,61 @@
         "farewell": ["goodbye", "bye", "talk to you later", "see you"],
         "wellness_query": ["how are you", "how have you been", "how do you feel"],
         "gratitude": ["thanks", "thank you"]
+    },
+    "emotion_map": {
+        "happiness": {
+            "keywords": ["happy", "glad", "good", "great", "wonderful", "fantastic"],
+            "anti-keywords": ["not great", "not good", "not too good"],
+            "positivity": 1
+        },
+        "contentment": {
+            "keywords": ["relaxed", "peace", "peaceful", "calm", "nice", "not bad", "not too bad"],
+            "positivity": 1
+        },
+        "boredom": {
+            "keywords": ["bored", "boredom"],
+            "positivity": 0
+        },
+        "sadness": {
+            "keywords": ["sad", "terrible", "awful", "bad", "not good", "not great", "not too good"],
+            "anti-keywords": ["not bad", "not too bad"],
+            "positivity": -1
+        },
+        "depression": {
+            "keywords": ["depressed", "hate my life", "hate everything", "hate my life"],
+            "positivity": -3
+        },
+        "frustration":  {
+            "keywords": ["frustrated", "driving me crazy", "helpless"],
+            "positivity": -1
+        },
+        "anger": {
+            "keywords": ["mad", "angry", "frustrated", "annoyed"],
+            "positivity": -1
+        },
+        "fear": {
+            "keywords": ["scared", "afraid", "fearful"],
+            "positivity": -2
+        },
+        "panic": {
+            "keywords": ["freaking out", "cant breathe", "cant calm down", "hyperventilate"],
+            "positivity": -3
+        },
+        "loneliness": {
+            "keywords": ["alone", "lonely", "loneliness"],
+            "positivity": -1
+        },
+        "self-doubt": {
+            "keywords": ["hate myself", "never forgive myself", "never be better", "useless"],
+            "positivity": -2
+        },
+        "self-harm": {
+            "keywords": ["kill myself", "sleep forever", "end it", "end my life"],
+            "positivity": -6
+        },
+        "rage": {
+            "keywords": ["kill someone", "so mad"],
+            "positivity": -3
+        }
     }
 }

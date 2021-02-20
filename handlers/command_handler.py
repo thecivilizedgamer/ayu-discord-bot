@@ -15,7 +15,7 @@ from handlers.alarm_handlers import (alarm_command, delete_alarm_command,
                                      list_alarms_command)
 from handlers.backup_handlers import (backup_command, list_backups_command,
                                       restore_command)
-from handlers.chat_handlers import dm_command, quote_command
+from handlers.chat_handlers import checkin_command, dm_command, quote_command
 from handlers.debug_handlers import debug_command, ping_command, reload_command
 from handlers.timer_handlers import (delete_timer_command, list_timers_command,
                                      timer_command)
@@ -27,14 +27,15 @@ logger.addHandler(logging.NullHandler())
 
 COMMAND_DESCRIPTIONS = {
     "(nothing)":    "Show this help message",
-    "ping":         "check that I\'m listening",
+    "ping":         "Check that I\'m listening",
     "timer":        "Set a timer",
     "list timers":  "List all of your timers",
     "delete timer": "Delete an existing timer",
     "alarm":        "Set an alarm",
     "list alarms":  "List all of your alarms",
     "delete alarm": "Delete an existing alarm",
-    "quote": "I'll tell you an inspiring quote!"
+    "quote": "I'll tell you an inspiring quote!",
+    "checkin": "I'll ask you how you're doing!"
 }
 
 
@@ -108,7 +109,8 @@ command_handlers = {
         'timers': list_timers_command,
         'alarms': list_alarms_command
     },
-    'quote': quote_command
+    'quote': quote_command,
+    'checkin': checkin_command
 }
 
 admin_command_handlers = {

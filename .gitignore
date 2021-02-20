@@ -2,5 +2,5 @@
 .project
 config.json
 *.pyc
-save.dmp
-save.dmp.bak
+*.dmp
+*.dmp.bak

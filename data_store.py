@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import traceback
 
 from misc import capitalize
 
@@ -18,7 +19,7 @@ class DataStore:
                 with open(self.data_file_path) as f:
                     self._data = json.load(f)
             except Exception:
-                msg = f'Unable to load {self.data_file_path}'
+                msg = f'Unable to load {self.data_file_path}: {traceback.format_exc()}'
                 if self.catch_errors:
                     print(msg)
                 else:
@@ -36,6 +37,10 @@ class Chat(DataStore):
     @property
     def response_map(self):
         return self.data['response_map']
+
+    @property
+    def emotion_map(self):
+        return self.data['emotion_map']
 
 
 class Quotes(DataStore):

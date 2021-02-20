@@ -72,5 +72,17 @@
         "~Ding ding ding~",
         "Heeeeeey!",
         "Guess what?"
+    ],
+    "checkin": [
+        "How are you doing?",
+        "How are you feeling?",
+        "Tell me how you're doing!",
+        "Tell me how you're feeling!",
+        "Hey there, how are things?",
+        "Hiya, how are you doing?",
+        "Hello there! How are you doing?",
+        "How are you feeling right now? You can be honest with me!",
+        "Hey there, I'd love to know how you're honestly feeling right now!",
+        "Hi! How are you doing right now?"
     ]
 }

@@ -7,6 +7,78 @@ from bot_data_store import ConvoSubscription, ReactionSubscription
 from enums import Emoji
 from misc import month_str_to_number, remove_all_punctuation, str_to_time
 
+number_emoji = [Emoji.ONE,
+                Emoji.TWO,
+                Emoji.THREE,
+                Emoji.FOUR,
+                Emoji.FIVE,
+                Emoji.SIX,
+                Emoji.SEVEN,
+                Emoji.EIGHT,
+                Emoji.NINE]
+number_labels = ['1',
+                 '2',
+                 '3',
+                 '4',
+                 '5',
+                 '6',
+                 '7',
+                 '8',
+                 '9']
+
+alphabet_emoji = [Emoji.A,
+                  Emoji.B,
+                  Emoji.C,
+                  Emoji.D,
+                  Emoji.E,
+                  Emoji.F,
+                  Emoji.G,
+                  Emoji.H,
+                  Emoji.I,
+                  Emoji.J,
+                  Emoji.K,
+                  Emoji.L,
+                  Emoji.M,
+                  Emoji.N,
+                  Emoji.O,
+                  Emoji.P,
+                  Emoji.Q,
+                  Emoji.R,
+                  Emoji.S,
+                  Emoji.T,
+                  Emoji.U,
+                  Emoji.V,
+                  Emoji.W,
+                  Emoji.X,
+                  Emoji.Y,
+                  Emoji.Z]
+alphabet_labels = ['A',
+                   'B',
+                   'C',
+                   'D',
+                   'E',
+                   'F',
+                   'G',
+                   'H',
+                   'I',
+                   'J',
+                   'K',
+                   'L',
+                   'M',
+                   'N',
+                   'O',
+                   'P',
+                   'Q',
+                   'R',
+                   'S',
+                   'T',
+                   'U',
+                   'V',
+                   'W',
+                   'X',
+                   'Y',
+                   'Z']
+
 
 async def get_next_response(subscriber_queue, timeout_s=60):
     start = time.time()
@@ -30,28 +102,25 @@ async def prompt(user_id, channel, prompt_str, timeout_s=60):
 
 
 async def get_menu_selections(user_id, channel, menu_str, options, timeout_s=60):
-    if len(options) > 9:
-        raise RuntimeError("Can't have more than 9 menu options")
+    if len(options) > 26:
+        raise RuntimeError("Can't have more than 26 menu options")
 
-    emoji_numbers = [Emoji.ONE,
-                     Emoji.TWO,
-                     Emoji.THREE,
-                     Emoji.FOUR,
-                     Emoji.FIVE,
-                     Emoji.SIX,
-                     Emoji.SEVEN,
-                     Emoji.EIGHT,
-                     Emoji.NINE]
+    if len(options) < 10:
+        emoji_buttons = number_emoji
+        emoji_labels = number_labels
+    else:
+        emoji_buttons = alphabet_emoji
+        emoji_labels = alphabet_labels
 
     menu_str += '```'
     for i, option in enumerate(options):
-        menu_str += f'\n   {i + 1}. {option}'
+        menu_str += f'\n   {emoji_labels[i]}. {option}'
     menu_str += '```'
 
     message = await channel.send(menu_str)
     with ReactionSubscription(user_id, message.id) as queue:
         for i in range(len(options)):
-            await message.add_reaction(emoji_numbers[i])
+            await message.add_reaction(emoji_buttons[i])
         await message.add_reaction(Emoji.CHECK_MARK)
 
         selections = []
@@ -69,8 +138,8 @@ async def get_menu_selections(user_id, channel, menu_str, options, timeout_s=60)
                 if item['reaction'].emoji.name == Emoji.CHECK_MARK and item['action'] == 'add':
                     break
                 else:
-                    if item['reaction'].emoji.name in emoji_numbers:
-                        number = emoji_numbers.index(item['reaction'].emoji.name)
+                    if item['reaction'].emoji.name in emoji_buttons:
+                        number = emoji_buttons.index(item['reaction'].emoji.name)
                         if number < len(options):
                             option = options[number]
                             if item['action'] == 'add' and option not in selections:
@@ -83,27 +152,24 @@ async def get_menu_selections(user_id, channel, menu_str, options, timeout_s=60)
 
 
 async def get_menu_selection(user_id, channel, menu_str, options, timeout_s=60):
-    if len(options) > 9:
-        raise RuntimeError("Can't have more than 9 menu options")
+    if len(options) > 26:
+        raise RuntimeError("Can't have more than 26 menu options")
 
-    emoji_numbers = [Emoji.ONE,
-                     Emoji.TWO,
-                     Emoji.THREE,
-                     Emoji.FOUR,
-                     Emoji.FIVE,
-                     Emoji.SIX,
-                     Emoji.SEVEN,
-                     Emoji.EIGHT,
-                     Emoji.NINE]
+    if len(options) < 10:
+        emoji_buttons = number_emoji
+        emoji_labels = number_labels
+    else:
+        emoji_buttons = alphabet_emoji
+        emoji_labels = alphabet_labels
 
     menu_str += '```'
     for i, option in enumerate(options):
-        menu_str += f'\n   {i + 1}. {option}'
+        menu_str += f'\n   {emoji_labels[i]}. {option}'
     menu_str += '```'
     message = await channel.send(menu_str)
     with ReactionSubscription(user_id, message.id) as queue:
         for i in range(len(options)):
-            await message.add_reaction(emoji_numbers[i])
+            await message.add_reaction(emoji_buttons[i])
 
         selection = None
         start = time.time()
@@ -116,7 +182,7 @@ async def get_menu_selection(user_id, channel, menu_str, options, timeout_s=60):
                 await asyncio.sleep(.25)
             else:
                 if item['action'] == 'add' and item['reaction'].emoji.name in emoji_numbers:
-                    number = emoji_numbers.index(item['reaction'].emoji.name)
+                    number = emoji_buttons.index(item['reaction'].emoji.name)
                     if number < len(options):
                         selection = options[number]
                         break
