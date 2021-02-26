@@ -1,15 +1,18 @@
+from bot import Bot
 from client import Client
-from data_store import Data
-from db import save_task
-from events import alarm_task, timer_task
+from events import (on_message, on_raw_reaction_add, on_raw_reaction_remove,
+                    on_ready)
+from static_data import StaticData
+
+client = Client.get_client()
 
 
 def main():
-    client = Client.get_client()
-    client.loop.create_task(timer_task())
-    client.loop.create_task(alarm_task())
-    client.loop.create_task(save_task())
-    client.run(Data.config.bot_token)
+    StaticData.load_static_data(initialized=False)
+    Bot.load_features()
+    Bot.start_tasks()
+    Bot.running = True
+    client.run(StaticData.get_value('config.bot_token'))
 
 
 if __name__ == '__main__':

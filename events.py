@@ -1,16 +1,11 @@
-import asyncio
-import datetime
-import time
 import traceback
 
-from bot_data_store import BotData
-from chat import get_responses
+from bot import Bot
 from client import Client
-from data_store import Data
-from db import DB
-from enums import Days, Emoji
-from handlers.command_handler import handle_command
-from misc import uncapitalize
+from data import Data
+from enums import CallbackResponse
+from misc import capitalize, remove_trailing_punctuation
+from static_data import StaticData
 from user import User
 
 client = Client.get_client()
@@ -18,8 +13,9 @@ client = Client.get_client()
 
 @client.event
 async def on_ready():
-    await DB.load_from_disk()
-    await client.get_channel(Data.config.debug_channel_id).send('Bot is online!')
+    await Data.load_from_disk()
+    await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
+        f"{capitalize(StaticData.get_value('config.command_word'))} is online!")
 
 
 @client.event
@@ -28,29 +24,84 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
 
-    # profanity_present = check_for_profanity(message)
-    # If profanity present, either report to mods (if that's enabled) or ignore the message
+    is_dm = message.guild is None
+    is_admin = False if is_dm else message.author.id in Data.get_server_data(message.guild.id)['administrators']
+    is_owner = message.author.id == StaticData.get_value('config.owner_user_id')
 
-    if message.guild is None:\
-            # For features that are only applicable in DMs
-        pass
+    # PRE-COMMAND ON-MESSAGE CALLBACKS
+    if message.guild is None:
+        # For features that are only applicable in DMs
+        for feature in Bot.get_dm_only_features(is_owner):
+            for callback in feature.on_message_first_callbacks:
+                if callback(message) == CallbackResponse.STOP:
+                    return
     else:
         # For features that are only applicable in servers
-        pass
+        for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
+            for callback in feature.on_message_first_callbacks:
+                if callback(message) == CallbackResponse.STOP:
+                    return
 
-        # Do profanity checks here, once implemented. Must be before processing commands
+    # For features that are applicable in both servers and DMs
+    for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
+        for callback in feature.on_message_first_callbacks:
+            if callback(message) == CallbackResponse.STOP:
+                return
 
-    if len(BotData.convo_subscribers.get(message.author.id, [])) > 0 and \
-            message.channel.id in BotData.convo_subscribers[message.author.id]:
-        BotData.convo_subscribers[message.author.id][message.channel.id].put_nowait(message)
+    # If message is part of bot conversation
+    if len(Bot.convo_subscribers.get(message.author.id, [])) > 0 and \
+            message.channel.id in Bot.convo_subscribers[message.author.id]:
+        Bot.convo_subscribers[message.author.id][message.channel.id].put_nowait(message)
     else:
-        if message.content.startswith(f'!{Data.config.command_word}'):
-            await handle_command(message)
-        elif message.guild is None:
-            # If not sure what else to do with message, and if in DMs, then try to respond intelligently
-            responses = get_responses(message.content)
-            for response in responses:
-                await message.channel.send(response)
+        # Process command
+        if message.content.startswith(f"!{StaticData.get_value('config.command_word')}"):
+            command = message.content.split(f"!{StaticData.get_value('config.command_word')}", maxsplit=1)[1].strip()
+            command_arg = None
+
+            if len(command) == 0:
+                await Bot.display_help(message)
+            else:
+                command_segments = command.split(maxsplit=1)
+                first_word = remove_trailing_punctuation(command_segments[0]).lower()
+                if len(command_segments) > 1:
+                    command_arg = command_segments[1]
+
+                command = Bot.get_available_commands(
+                    is_dm, is_admin, is_owner, None if message.guild is None else message.guild.id).get(first_word)
+
+                if command is None:
+                    await message.channel.send(
+                        "Sorry, I don't know how to help with that! "
+                        f"If you want to know what I can do, simply type `!{StaticData.get_value('config.command_word')}`")
+                else:
+                    try:
+                        if await command.command_execute(message, command_arg) == CallbackResponse.STOP:
+                            return
+                    except Exception:
+                        user = await User.get_user(message.author.id)
+                        await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
+                            f'ERROR: Failed while processing command `{message.content}` from user {user}: ```{traceback.format_exc()}```')
+                        await message.channel.send(
+                            "I'm sorry, something went wrong! Double-check what you typed and try again?")
+
+    if message.guild is None:
+        # For features that are only applicable in DMs
+        for feature in Bot.get_dm_only_features(is_owner):
+            for callback in feature.on_message_last_callbacks:
+                if callback(message) == CallbackResponse.STOP:
+                    return
+    else:
+        # For features that are only applicable in servers
+        for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
+            for callback in feature.on_message_last_callbacks:
+                if callback(message) == CallbackResponse.STOP:
+                    return
+
+    # For features that are applicable in both servers and DMs
+    for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
+        for callback in feature.on_message_last_callbacks:
+            if callback(message) == CallbackResponse.STOP:
+                return
 
 
 @client.event
@@ -59,21 +110,35 @@ async def on_raw_reaction_add(reaction):
     if reaction.user_id == client.user.id:
         return
 
+    is_dm = reaction.guild_id is None
+    is_admin = False if is_dm else reaction.user_id in Data.get_server_data(reaction.guild_id)['administrators']
+    is_owner = reaction.user_id == StaticData.get_value('config.owner_user_id')
+
     if reaction.guild_id is None:
         # For features that are only applicable in DMs
-        await check_if_alarm_was_acknowledged(reaction)
+        for feature in Bot.get_dm_only_features(is_owner):
+            for callback in feature.add_reaction_callbacks:
+                if callback(reaction) == CallbackResponse.STOP:
+                    return
     else:
         # For features that are only applicable in servers
-        await handle_pins(reaction)
+        for feature in Bot.get_server_only_features(reaction.guild_id, is_admin, is_owner):
+            for callback in feature.add_reaction_callbacks:
+                if callback(reaction) == CallbackResponse.STOP:
+                    return
 
     # For features that are applicable in both servers and DMs
+    for feature in Bot.get_global_features(reaction.guild_id, is_admin, is_owner):
+        for callback in feature.add_reaction_callbacks:
+            if callback(reaction) == CallbackResponse.STOP:
+                return
 
     # Handle reaction subscribers
-    if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
+    if len(Bot.reaction_subscribers.get(reaction.user_id, [])) > 0:
         channel = await client.fetch_channel(reaction.channel_id)
         message = await channel.fetch_message(reaction.message_id)
-        if message.id in BotData.reaction_subscribers[reaction.user_id]:
-            BotData.reaction_subscribers[reaction.user_id][message.id].put_nowait(
+        if message.id in Bot.reaction_subscribers[reaction.user_id]:
+            Bot.reaction_subscribers[reaction.user_id][message.id].put_nowait(
                 {'action': 'add', 'reaction': reaction})
 
 
@@ -83,113 +148,32 @@ async def on_raw_reaction_remove(reaction):
     if reaction.user_id == client.user.id:
         return
 
-    if len(BotData.reaction_subscribers.get(reaction.user_id, [])) > 0:
+    is_dm = reaction.guild_id is None
+    is_admin = False if is_dm else reaction.user_id in Data.get_server_data(reaction.guild_id)['administrators']
+    is_owner = reaction.user_id == StaticData.get_value('config.owner_user_id')
+
+    if reaction.guild_id is None:
+        # For features that are only applicable in DMs
+        for feature in Bot.get_dm_only_features(is_owner):
+            for callback in feature.remove_reaction_callbacks:
+                if callback(reaction) == CallbackResponse.STOP:
+                    return
+    else:
+        # For features that are only applicable in servers
+        for feature in Bot.get_server_only_features(reaction.guild_id, is_admin, is_owner):
+            for callback in feature.remove_reaction_callbacks:
+                if callback(reaction) == CallbackResponse.STOP:
+                    return
+
+    # For features that are applicable in both servers and DMs
+    for feature in Bot.get_global_features(reaction.guild_id, is_admin, is_owner):
+        for callback in feature.remove_reaction_callbacks:
+            if callback(reaction) == CallbackResponse.STOP:
+                return
+
+    if len(Bot.reaction_subscribers.get(reaction.user_id, [])) > 0:
         channel = await client.fetch_channel(reaction.channel_id)
         message = await channel.fetch_message(reaction.message_id)
-        if message.id in BotData.reaction_subscribers[reaction.user_id]:
-            BotData.reaction_subscribers[reaction.user_id][message.id].put_nowait(
+        if message.id in Bot.reaction_subscribers[reaction.user_id]:
+            Bot.reaction_subscribers[reaction.user_id][message.id].put_nowait(
                 {'action': 'remove', 'reaction': reaction})
-
-
-async def timer_task():
-    await client.wait_until_ready()
-    while True:
-        try:
-            for user_id, timers in DB.get_all_timers().items():
-                timers_to_delete = []
-                for timer_name, timer_end in timers.items():
-                    if time.time() >= timer_end:
-                        await User.send_dm(user_id, f"{Data.phrases.get_timer_message()}\nIt's time to **{uncapitalize(timer_name)}**!")
-                        timers_to_delete.append(timer_name)
-                for expired_timer_name in timers_to_delete:
-                    await DB.delete_timer(user_id, expired_timer_name)
-            await asyncio.sleep(1)
-        except Exception:
-            await client.get_channel(Data.config.debug_channel_id).send(
-                f'ERROR: Failure while processing timer tasks: {traceback.format_exc()}')
-            await asyncio.sleep(5)
-
-
-async def alarm_task():
-    await client.wait_until_ready()
-    while True:
-        try:
-            now = datetime.datetime.utcnow()
-            alarms_to_process = []
-            for user_id, alarms in DB.get_all_alarms().items():
-                for alarm_name, alarm_data in alarms.items():
-                    for day in alarm_data['days']:
-                        for alarm_hour, alarm_min in alarm_data['times']:
-                            utc_day_min = 60 * alarm_hour + alarm_min - DB.get_utc_time_offset_mins(user_id)
-                            while utc_day_min > 60 * 24:
-                                utc_day_min -= 60 * 24
-                                day += 1
-                            while utc_day_min < 0:
-                                utc_day_min += 60 * 24
-                                day -= 1
-                            utc_hour = utc_day_min // 60
-                            utc_min = utc_day_min % 60
-
-                            day %= 7
-
-                            recent_alarm_datetime = datetime.datetime(now.year, now.month, now.day, utc_hour, utc_min)
-                            while Days.str_to_int(recent_alarm_datetime.strftime('%A')) != day:
-                                recent_alarm_datetime -= datetime.timedelta(days=1)
-
-                            # Find out if datetime is from the past 4 hours, and if so queue for processing
-                            if recent_alarm_datetime < now and \
-                                    recent_alarm_datetime > alarm_data['created_at'] and \
-                                    now - recent_alarm_datetime < datetime.timedelta(hours=Data.config.max_alarm_snooze_hours):
-                                alarms_to_process.append((user_id, alarm_name, recent_alarm_datetime))
-
-            alarms_to_ring = []
-            # Now, narrow down to alarms we actually need to set off
-            for user_id, alarm_name, alarm_datetime in alarms_to_process:
-                if DB.alarm_is_acknowledged(user_id, alarm_name, alarm_datetime):
-                    continue
-                last_ring_time = DB.get_ringing_alarm_time(user_id, alarm_name, alarm_datetime)
-                if time.time() - last_ring_time < Data.config.alarm_snooze_sec:
-                    continue
-                alarms_to_ring.append((user_id, alarm_name, alarm_datetime))
-
-            # Set off the alarms
-            for user_id, alarm_name, alarm_datetime in alarms_to_ring:
-                dm_channel = await User.get_dm_channel(user_id)
-                message = await dm_channel.send(f"{Data.phrases.get_timer_message()}\nIt's time to **{uncapitalize(alarm_name)}**!\n\nClick the checkmark to reset the alarm :)")
-                await message.add_reaction(Emoji.CHECK_MARK)
-                await DB.reset_ringing_alarm_time(user_id, alarm_name, alarm_datetime)
-                await DB.add_ringing_alarm_message(user_id, alarm_name, alarm_datetime, message.id)
-            await asyncio.sleep(5)
-        except Exception:
-            await client.get_channel(Data.config.debug_channel_id).send(
-                f'ERROR: Failure while processing alarm tasks: ```{traceback.format_exc()}```')
-            await asyncio.sleep(5)
-
-
-async def check_if_alarm_was_acknowledged(reaction):
-    if reaction.emoji.name != Emoji.CHECK_MARK:
-        return
-
-    channel = await client.fetch_channel(reaction.channel_id)
-    message = await channel.fetch_message(reaction.message_id)
-
-    alarm_tuple = DB.lookup_alarm_from_message(message.id)
-    if alarm_tuple is not None and alarm_tuple[0] == reaction.user_id:
-        if DB.alarm_is_ringing(*alarm_tuple):
-            await DB.acknowledge_alarm(*alarm_tuple)
-            await message.remove_reaction(Emoji.CHECK_MARK, client.user)
-
-
-async def handle_pins(reaction):
-    if reaction.emoji.name in [Emoji.PIN, Emoji.X_MARK]:
-        # Don't retrieve the message unless it will actually be needed
-        channel = await client.fetch_channel(reaction.channel_id)
-        message = await channel.fetch_message(reaction.message_id)
-
-    if reaction.emoji.name == Emoji.PIN:
-        for msg_reaction in message.reactions:
-            if msg_reaction.emoji == Emoji.PIN and msg_reaction.count >= Data.config.pin_threshold:
-                await message.pin()
-    elif reaction.emoji.name == Emoji.X_MARK and reaction.member.guild_permissions.administrator:
-        # Only allow admins to unpin messages
-        await message.unpin()

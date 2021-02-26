@@ -2,8 +2,7 @@ import random
 import time
 from datetime import timedelta
 
-from data_store import Data
-from db import DB
+from data import Data
 from interface import prompt
 from misc import (capitalize, remove_all_punctuation, seconds_to_string,
                   uncapitalize)
@@ -83,3 +82,31 @@ async def delete_timer_command(message, command_arg):
     else:
         await DB.delete_timer(message.author.id, timer_name)
         await message.channel.send(f"Ok, I'll forget about that timer :)")
+
+
+@staticmethod
+def get_timers(user_id):
+    DB.ensure_user_id(user_id)
+    return DB.db[user_id]['timers']
+
+
+@staticmethod
+def get_all_timers():
+    return {key: val['timers'] for key, val in DB.db.items() if key != 'bot'}
+
+
+@staticmethod
+async def add_timer(user_id, timer_name, timer_end):
+    DB.ensure_user_id(user_id)
+    DB.db[user_id]['timers'][timer_name] = timer_end
+    await DB.request_save()
+
+
+@staticmethod
+async def delete_timer(user_id, timer_name):
+    DB.ensure_user_id(user_id)
+    mapping = {name.lower(): name for name in DB.db[user_id]['timers'].keys()}
+    actual_name = mapping[timer_name.lower()]
+    if actual_name in DB.db[user_id]['timers']:
+        del DB.db[user_id]['timers'][actual_name]
+    await DB.request_save()

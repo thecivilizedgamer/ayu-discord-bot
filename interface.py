@@ -3,7 +3,7 @@ import datetime
 import time
 from asyncio.queues import QueueEmpty
 
-from bot_data_store import ConvoSubscription, ReactionSubscription
+from bot import ConvoSubscription, ReactionSubscription
 from enums import Emoji
 from misc import month_str_to_number, remove_all_punctuation, str_to_time
 

@@ -71,3 +71,7 @@ class Days(Enum):
     @staticmethod
     def int_to_str(day_int):
         return Days.ordered_days()[day_int]
+
+
+class CallbackResponse(Enum):
+    STOP = 1

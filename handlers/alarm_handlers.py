@@ -1,8 +1,8 @@
 import datetime
 import random
 
-from bot_data_store import ConvoSubscription
-from data_store import Data
+from bot_data import ConvoSubscription
+from data import Data
 from db import DB
 from enums import Days
 from interface import (get_menu_selections, get_next_response,
@@ -110,3 +110,96 @@ async def list_alarms_command(message, command_arg):
             msg += '\n' + get_alarm_description(capitalize(alarm_name), alarm_data['days'], alarm_data['times'])
         msg += '```'
         await message.channel.send(msg)
+
+
+@staticmethod
+def get_alarms(user_id):
+    DB.ensure_user_id(user_id)
+    return DB.db[user_id]['alarms']
+
+
+@staticmethod
+def get_all_alarms():
+    return {key: val['alarms'] for key, val in DB.db.items() if key != 'bot'}
+
+
+@staticmethod
+async def add_alarm(user_id, alarm_name, alarm_data):
+    DB.ensure_user_id(user_id)
+    DB.db[user_id]['alarms'][alarm_name] = alarm_data
+    await DB.request_save()
+
+
+@staticmethod
+async def delete_alarm(user_id, alarm_name):
+    DB.ensure_user_id(user_id)
+    mapping = {name.lower(): name for name in DB.db[user_id]['alarms'].keys()}
+    actual_name = mapping[alarm_name.lower()]
+    if actual_name in DB.db[user_id]['alarms']:
+        del DB.db[user_id]['alarms'][actual_name]
+    await DB.request_save()
+
+
+@staticmethod
+async def acknowledge_alarm(user_id, alarm_name, alarm_datetime):
+    DB.db['bot']['acknowledged_alarms'].append((user_id, alarm_name, alarm_datetime))
+    if (user_id, alarm_name, alarm_datetime) in DB.db['bot']['ringing_alarms']:
+        messages = DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]['messages']
+        del DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]
+        for message_id in messages:
+            del DB.db['bot']['alarm_message_mappings'][message_id]
+    await DB.request_save()
+
+
+@staticmethod
+def alarm_is_acknowledged(user_id, alarm_name, alarm_datetime):
+    return (user_id, alarm_name, alarm_datetime) in DB.db['bot']['acknowledged_alarms']
+
+
+@staticmethod
+def remove_old_acknowledged_alarms(user_id, alarm_name, alarm_datetime):
+    alarms_to_remove = []
+    now = datetime.datetime.utcnow()
+    for alarm_id in DB.db['bot']['acknowledged_alarms']:
+        if now - alarm_id[2] > datetime.timedelta(hours=StaticData.get_value('config.max_alarm_snooze_hours'), minutes=5):
+            alarms_to_remove.append(alarm_id)
+    for alarm_id in alarms_to_remove:
+        DB.db['bot']['acknowledged_alarms'].remove(alarm_id)
+
+
+@staticmethod
+def alarm_is_ringing(user_id, alarm_name, alarm_datetime):
+    return (user_id, alarm_name, alarm_datetime) in DB.db['bot']['ringing_alarms']
+
+
+@staticmethod
+async def reset_ringing_alarm_time(user_id, alarm_name, alarm_datetime):
+    if (user_id, alarm_name, alarm_datetime) not in DB.db['bot']['ringing_alarms']:
+        DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)] = {
+            'last_ring': time.time(),
+            'messages': []
+        }
+    DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]['last_ring'] = time.time()
+    await DB.request_save()
+
+
+@staticmethod
+async def add_ringing_alarm_message(user_id, alarm_name, alarm_datetime, message_id):
+    if (user_id, alarm_name, alarm_datetime) not in DB.db['bot']['ringing_alarms']:
+        DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)] = {
+            'last_ring': time.time(),
+            'messages': []
+        }
+    DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]['messages'].append(message_id)
+    DB.db['bot']['alarm_message_mappings'][message_id] = (user_id, alarm_name, alarm_datetime)
+    await DB.request_save()
+
+
+@staticmethod
+def get_ringing_alarm_time(user_id, alarm_name, alarm_datetime):
+    return DB.db['bot']['ringing_alarms'].get((user_id, alarm_name, alarm_datetime), {}).get('last_ring', 0)
+
+
+@staticmethod
+def get_ringing_alarm_messages(user_id, alarm_name, alarm_datetime):
+    return DB.db['bot']['ringing_alarms'].get((user_id, alarm_name, alarm_datetime), {}).get('messages', [])

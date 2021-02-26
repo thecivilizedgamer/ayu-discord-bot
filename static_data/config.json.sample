@@ -1,0 +1,9 @@
+{
+    "owner_user_id": 111111111111111111,
+    "debug_channel_id": 111111111111111111,
+    "bot_token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "max_alarm_snooze_hours": 4,
+    "alarm_snooze_sec": 300,
+    "pin_threshold": 3,
+    "command_word": "ayu"
+}

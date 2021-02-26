@@ -59,19 +59,11 @@
         "Of course, let me know if you need anything else!",
         "My pleasure!"
     ],
-    "dm": [
-        "Have no fear, <bot_name> is here! :D",
-        "_slides into DMs_",
-        "_A wild <bot_name> appears!_",
-        "Well howdy!"
-    ],
     "timer": [
-        "~Meep meep meep~",
-        "~Beep beep beep~",
-        "~Ring ring ring~",
-        "~Ding ding ding~",
-        "Heeeeeey!",
-        "Guess what?"
+        "~Meep Meep Meep~",
+        "~Beep Beep Beep~",
+        "~Ring Ring Ring~",
+        "~Ding Ding Ding~"
     ],
     "checkin": [
         "How are you doing?",
