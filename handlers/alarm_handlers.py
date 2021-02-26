@@ -141,22 +141,6 @@ async def delete_alarm(user_id, alarm_name):
 
 
 @staticmethod
-async def acknowledge_alarm(user_id, alarm_name, alarm_datetime):
-    DB.db['bot']['acknowledged_alarms'].append((user_id, alarm_name, alarm_datetime))
-    if (user_id, alarm_name, alarm_datetime) in DB.db['bot']['ringing_alarms']:
-        messages = DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]['messages']
-        del DB.db['bot']['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]
-        for message_id in messages:
-            del DB.db['bot']['alarm_message_mappings'][message_id]
-    await DB.request_save()
-
-
-@staticmethod
-def alarm_is_acknowledged(user_id, alarm_name, alarm_datetime):
-    return (user_id, alarm_name, alarm_datetime) in DB.db['bot']['acknowledged_alarms']
-
-
-@staticmethod
 def remove_old_acknowledged_alarms(user_id, alarm_name, alarm_datetime):
     alarms_to_remove = []
     now = datetime.datetime.utcnow()
@@ -165,11 +149,6 @@ def remove_old_acknowledged_alarms(user_id, alarm_name, alarm_datetime):
             alarms_to_remove.append(alarm_id)
     for alarm_id in alarms_to_remove:
         DB.db['bot']['acknowledged_alarms'].remove(alarm_id)
-
-
-@staticmethod
-def alarm_is_ringing(user_id, alarm_name, alarm_datetime):
-    return (user_id, alarm_name, alarm_datetime) in DB.db['bot']['ringing_alarms']
 
 
 @staticmethod
