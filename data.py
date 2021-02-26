@@ -41,6 +41,12 @@ class Data:
         return Data.data[feature_key]['users'][user_id]
 
     @staticmethod
+    def get_all_users_data_for_feature(feature_key):
+        if feature_key not in Data.data:
+            Data.data[feature_key] = {'users': {}, 'servers': {}, 'global': {}}
+        return Data.data[feature_key]['users']
+
+    @staticmethod
     def get_server_data_for_feature(guild_id, feature_key):
         if feature_key not in Data.data:
             Data.data[feature_key] = {'users': {}, 'servers': {}, 'global': {}}

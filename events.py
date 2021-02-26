@@ -33,19 +33,19 @@ async def on_message(message):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.on_message_first_callbacks:
-                if callback(message) == CallbackResponse.STOP:
+                if await callback(message) == CallbackResponse.STOP:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
             for callback in feature.on_message_first_callbacks:
-                if callback(message) == CallbackResponse.STOP:
+                if await callback(message) == CallbackResponse.STOP:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
         for callback in feature.on_message_first_callbacks:
-            if callback(message) == CallbackResponse.STOP:
+            if await callback(message) == CallbackResponse.STOP:
                 return
 
     # If message is part of bot conversation
@@ -88,19 +88,19 @@ async def on_message(message):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.on_message_last_callbacks:
-                if callback(message) == CallbackResponse.STOP:
+                if await callback(message) == CallbackResponse.STOP:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
             for callback in feature.on_message_last_callbacks:
-                if callback(message) == CallbackResponse.STOP:
+                if await callback(message) == CallbackResponse.STOP:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
         for callback in feature.on_message_last_callbacks:
-            if callback(message) == CallbackResponse.STOP:
+            if await callback(message) == CallbackResponse.STOP:
                 return
 
 
@@ -118,19 +118,19 @@ async def on_raw_reaction_add(reaction):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.add_reaction_callbacks:
-                if callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) == CallbackResponse.STOP:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(reaction.guild_id, is_admin, is_owner):
             for callback in feature.add_reaction_callbacks:
-                if callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) == CallbackResponse.STOP:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(reaction.guild_id, is_admin, is_owner):
         for callback in feature.add_reaction_callbacks:
-            if callback(reaction) == CallbackResponse.STOP:
+            if await callback(reaction) == CallbackResponse.STOP:
                 return
 
     # Handle reaction subscribers
@@ -156,19 +156,19 @@ async def on_raw_reaction_remove(reaction):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.remove_reaction_callbacks:
-                if callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) == CallbackResponse.STOP:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(reaction.guild_id, is_admin, is_owner):
             for callback in feature.remove_reaction_callbacks:
-                if callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) == CallbackResponse.STOP:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(reaction.guild_id, is_admin, is_owner):
         for callback in feature.remove_reaction_callbacks:
-            if callback(reaction) == CallbackResponse.STOP:
+            if await callback(reaction) == CallbackResponse.STOP:
                 return
 
     if len(Bot.reaction_subscribers.get(reaction.user_id, [])) > 0:

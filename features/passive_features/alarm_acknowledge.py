@@ -60,18 +60,5 @@ def alarm_is_ringing(user_id, alarm_name, alarm_datetime):
     return (user_id, alarm_name, alarm_datetime) in Data.get_feature_data('alarm').get('ringing_alarms', {})
 
 
-def alarm_is_acknowledged(user_id, alarm_name, alarm_datetime):
-    return (user_id, alarm_name, alarm_datetime) in Data.get_feature_data('alarm').get('acknowledged_alarms', [])
-
-
 def lookup_alarm_from_message(message_id):
     return Data.get_feature_data('alarm').get('alarm_message_mappings', {}).get(message_id)
-
-
-def get_utc_time_offset_mins(user_id):
-    return Data.get_user_data(user_id).get('utc_offset_mins')
-
-
-async def set_utc_time_offset_mins(user_id, utc_offset):
-    Data.get_user_data(user_id)['utc_offset_mins'] = utc_offset
-    await Data.request_save()
