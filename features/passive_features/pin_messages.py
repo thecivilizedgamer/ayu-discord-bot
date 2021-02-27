@@ -37,8 +37,11 @@ async def handle_pins(reaction):
         message = await channel.fetch_message(reaction.message_id)
 
     if reaction.emoji.name == Emoji.PIN:
+        server_data = Data.get_server_data_for_feature(reaction.guild_id, 'auto-pin')
+        if 'pin_threshold' not in server_data:
+            server_data['pin_threshold'] = 3
         for msg_reaction in message.reactions:
-            if msg_reaction.emoji == Emoji.PIN and msg_reaction.count >= StaticData.get_value('config.pin_threshold'):
+            if msg_reaction.emoji == Emoji.PIN and msg_reaction.count >= server_data['pin_threshold']:
                 await message.pin()
     elif reaction.emoji.name == Emoji.X_MARK and reaction.member.id in Data.get_server_data(reaction.guild_id)['administrators']:
         # Only allow admins to unpin messages

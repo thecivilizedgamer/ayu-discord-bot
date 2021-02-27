@@ -36,19 +36,19 @@ async def on_message(message):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.on_message_first_callbacks:
-                if await callback(message) == CallbackResponse.STOP:
+                if await callback(message) != CallbackResponse.CONTINUE:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
             for callback in feature.on_message_first_callbacks:
-                if await callback(message) == CallbackResponse.STOP:
+                if await callback(message) != CallbackResponse.CONTINUE:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
         for callback in feature.on_message_first_callbacks:
-            if await callback(message) == CallbackResponse.STOP:
+            if await callback(message) != CallbackResponse.CONTINUE:
                 return
 
     # If message is part of bot conversation
@@ -76,9 +76,10 @@ async def on_message(message):
                     await message.channel.send(
                         "Sorry, I don't know how to help with that! "
                         f"If you want to know what I can do, simply type `!{StaticData.get_value('config.command_word')}`")
+                    return
                 else:
                     try:
-                        if await command.command_execute(message, command_arg) == CallbackResponse.STOP:
+                        if await command.command_execute(message, command_arg) != CallbackResponse.CONTINUE:
                             return
                     except Exception:
                         user = await User.get_user(message.author.id)
@@ -86,24 +87,25 @@ async def on_message(message):
                             f'ERROR: Failed while processing command `{message.content}` from user {user}: ```{traceback.format_exc()}```')
                         await message.channel.send(
                             "I'm sorry, something went wrong! Double-check what you typed and try again?")
+                        return
 
     if message.guild is None:
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.on_message_last_callbacks:
-                if await callback(message) == CallbackResponse.STOP:
+                if await callback(message) != CallbackResponse.CONTINUE:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
             for callback in feature.on_message_last_callbacks:
-                if await callback(message) == CallbackResponse.STOP:
+                if await callback(message) != CallbackResponse.CONTINUE:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
         for callback in feature.on_message_last_callbacks:
-            if await callback(message) == CallbackResponse.STOP:
+            if await callback(message) != CallbackResponse.CONTINUE:
                 return
 
 
@@ -121,19 +123,19 @@ async def on_raw_reaction_add(reaction):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.add_reaction_callbacks:
-                if await callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) != CallbackResponse.CONTINUE:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(reaction.guild_id, is_admin, is_owner):
             for callback in feature.add_reaction_callbacks:
-                if await callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) != CallbackResponse.CONTINUE:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(reaction.guild_id, is_admin, is_owner):
         for callback in feature.add_reaction_callbacks:
-            if await callback(reaction) == CallbackResponse.STOP:
+            if await callback(reaction) != CallbackResponse.CONTINUE:
                 return
 
     # Handle reaction subscribers
@@ -159,19 +161,19 @@ async def on_raw_reaction_remove(reaction):
         # For features that are only applicable in DMs
         for feature in Bot.get_dm_only_features(is_owner):
             for callback in feature.remove_reaction_callbacks:
-                if await callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) != CallbackResponse.CONTINUE:
                     return
     else:
         # For features that are only applicable in servers
         for feature in Bot.get_server_only_features(reaction.guild_id, is_admin, is_owner):
             for callback in feature.remove_reaction_callbacks:
-                if await callback(reaction) == CallbackResponse.STOP:
+                if await callback(reaction) != CallbackResponse.CONTINUE:
                     return
 
     # For features that are applicable in both servers and DMs
     for feature in Bot.get_global_features(reaction.guild_id, is_admin, is_owner):
         for callback in feature.remove_reaction_callbacks:
-            if await callback(reaction) == CallbackResponse.STOP:
+            if await callback(reaction) != CallbackResponse.CONTINUE:
                 return
 
     if len(Bot.reaction_subscribers.get(reaction.user_id, [])) > 0:

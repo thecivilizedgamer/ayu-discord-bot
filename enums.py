@@ -75,3 +75,4 @@ class Days(Enum):
 
 class CallbackResponse(Enum):
     STOP = 1
+    CONTINUE = 2

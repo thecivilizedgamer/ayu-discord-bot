@@ -44,7 +44,7 @@ class ServerFeatureListFeature(BaseFeature):
         if len(enabled_features) > 0:
             msg += f'Enabled Features:\n```'
             for feature in enabled_features:
-                msg += f'{feature.feature_name}'
+                msg += f'\n{feature.feature_name}'
             msg += '```\n\n'
 
         if len(disabled_features) > 0:

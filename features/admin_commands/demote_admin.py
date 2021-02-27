@@ -23,6 +23,10 @@ class DemoteAdminFeature(BaseFeature):
     def server_only(self):
         return True
 
+    @property
+    def feature_hidden(self):
+        return True
+
     def get_brief_description(self, user_id, guild_id):
         return 'Demote an admin for the current server'
 

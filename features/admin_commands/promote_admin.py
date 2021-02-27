@@ -23,6 +23,10 @@ class PromoteAdminFeature(BaseFeature):
     def server_only(self):
         return True
 
+    @property
+    def feature_hidden(self):
+        return True
+
     def get_brief_description(self, user_id, guild_id):
         return 'Promote user to admin for the current server'
 

@@ -41,6 +41,7 @@ class Bot:
     reaction_subscribers = {}
     convo_subscribers = {}
     features = []
+    feature_footprints = {}
 
     @staticmethod
     def get_server_only_features(guild_id, include_admin, include_owner, include_disabled=False):
@@ -194,11 +195,14 @@ class Bot:
     def load_features():
         # Import feature modules
         feature_modules = []
+        new_feature_footprints = {}
         for root, _, filenames in os.walk('features'):
             for filename in filenames:
                 if filename.lower().endswith('.py') and not filename.lower().startswith('_'):
                     feature_modules.append(
                         importlib.import_module(os.path.join(root, filename[:-3]).replace(os.sep, '.')))
+                    new_feature_footprints[os.path.join(root, filename)] = hash(
+                        open(os.path.join(root, filename)).read())
 
         # Instantiate new features
         new_features = []
@@ -230,3 +234,14 @@ class Bot:
 
         # Replace old features, since all new features were loaded successfully
         Bot.features = new_features
+
+        # Analyze which features changed
+        load_results = {
+            'added': [x for x in new_feature_footprints if x not in Bot.feature_footprints],
+            'removed': [x for x in Bot.feature_footprints if x not in new_feature_footprints],
+            'modified': [x for x in new_feature_footprints
+                         if x in Bot.feature_footprints and new_feature_footprints[x] != Bot.feature_footprints[x]]
+        }
+
+        Bot.feature_footprints = new_feature_footprints
+        return load_results
