@@ -209,11 +209,11 @@ async def process_alarms():
                     user_id, alarm_name, alarm_datetime)
                 await Data.request_save()
 
-            await asyncio.sleep(10)
+            await asyncio.sleep(30)
         except Exception:
             await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
                 f'ERROR: Failure while processing alarm tasks: ```{traceback.format_exc()}```')
-            await asyncio.sleep(10)
+            await asyncio.sleep(30)
 
 
 async def remove_old_acknowledged_alarms(user_id, alarm_name, alarm_datetime):
