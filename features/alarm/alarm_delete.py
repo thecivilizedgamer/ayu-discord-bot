@@ -40,7 +40,7 @@ class AlarmDeleteFeature(BaseFeature):
                 msg += '\n' + get_alarm_description(capitalize(alarm_name), alarm_data['days'], alarm_data['times'])
             msg += '```'
             await message.channel.send(msg)
-            alarm_names = alarms.keys()
+            alarm_names = list(alarms.keys())
             random_alarm_name = random.choice(alarm_names)
             await message.channel.send(f"Which alarm would you like to delete? For example, \"{random_alarm_name}\"")
             alarm_name = await get_next_response(queue)

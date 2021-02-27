@@ -3,6 +3,7 @@ import shutil
 import time
 
 from base.feature import BaseFeature
+from bot import Bot
 from data import Data
 
 
@@ -45,4 +46,8 @@ class RestoreBackupFeature(BaseFeature):
         shutil.copy('save.dmp', backup_filename)  # Backup old save file
         await message.channel.send(f'Backed up current save file to {backup_filename}')
         await Data.load_from_disk(filename)
+        # Run initialization code for features. Necessary to, for example, fix
+        # inconsistencies that may be in data structs
+        for feature in Bot.features:
+            feature.initialize_feature()
         await message.channel.send(f'Successfully restored backup from {filename}')

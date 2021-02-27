@@ -19,6 +19,19 @@ client = Client.get_client()
 
 class AlarmAddFeature(BaseFeature):
 
+    def initialize_feature(self):
+        feature_data = Data.get_feature_data('alarm')
+        if 'ringing_alarms' not in feature_data:
+            feature_data['ringing_alarms'] = {}
+        if 'alarm_message_mappings' not in feature_data:
+            feature_data['alarm_message_mappings'] = {}
+        if 'acknowledged_alarms' not in feature_data:
+            feature_data['acknowledged_alarms'] = []
+
+    @staticmethod
+    def get_user_alarms(user_id):
+        return Data.get_user_data_for_feature(user_id, 'alarm').get('alarms', {})
+
     @property
     def feature_name(self):
         return 'alarm-add'
@@ -47,7 +60,7 @@ class AlarmAddFeature(BaseFeature):
         if alarm_name is None:
             await message.channel.send("I got tired of waiting, but if you want to set an alarm then ask me again!")
             return
-        if alarm_name.lower() in [x.lower() for x in Data.get_user_data_for_feature(message.author.id, 'alarm').get('alarms', {}).keys()]:
+        if alarm_name.lower() in [x.lower() for x in AlarmAddFeature.get_user_alarms(message.author.id).keys()]:
             await message.channel.send(f"You already have an alarm with that name! Check your existing alarms with \"!{StaticData.get_value('config.command_word')} list-alarms\"")
             return
 
@@ -119,10 +132,10 @@ class AlarmAddFeature(BaseFeature):
 
 
 async def add_alarm(user_id, alarm_name, alarm_data):
-    alarm_data = Data.get_user_data_for_feature(user_id, 'alarm')
-    if 'alarms' not in alarm_data:
-        alarm_data['alarms'] = {}
-    alarm_data['alarms'][alarm_name] = alarm_data
+    user_alarm_data = Data.get_user_data_for_feature(user_id, 'alarm')
+    if 'alarms' not in user_alarm_data:
+        user_alarm_data['alarms'] = {}
+    user_alarm_data['alarms'][alarm_name] = alarm_data
     await Data.request_save()
 
 
@@ -136,12 +149,13 @@ def get_utc_time_offset_mins(user_id):
 
 
 async def process_alarms():
+    await client.wait_until_ready()
     while True:
         try:
             now = datetime.datetime.utcnow()
             alarms_to_process = []
-            for user_id, alarms in Data.get_all_users_data_for_feature('alarm').items():
-                for alarm_name, alarm_data in alarms.items():
+            for user_id,  user_data in Data.get_all_users_data_for_feature('alarm').items():
+                for alarm_name, alarm_data in user_data.get('alarms', {}).items():
                     for day in alarm_data['days']:
                         for alarm_hour, alarm_min in alarm_data['times']:
                             utc_day_min = 60 * alarm_hour + alarm_min - get_utc_time_offset_mins(user_id)
@@ -169,9 +183,10 @@ async def process_alarms():
             alarms_to_ring = []
             # Now, narrow down to alarms we actually need to set off
             for user_id, alarm_name, alarm_datetime in alarms_to_process:
-                if alarm_is_acknowledged(user_id, alarm_name, alarm_datetime):
+                if (user_id, alarm_name, alarm_datetime) in Data.get_feature_data('alarm')['acknowledged_alarms']:
                     continue
-                last_ring_time = get_ringing_alarm_time(user_id, alarm_name, alarm_datetime)
+                last_ring_time = Data.get_feature_data('alarm')['ringing_alarms'].get(
+                    (user_id, alarm_name, alarm_datetime), {}).get('last_ring', 0)
                 if time.time() - last_ring_time < StaticData.get_value('config.alarm_snooze_sec'):
                     continue
                 alarms_to_ring.append((user_id, alarm_name, alarm_datetime))
@@ -182,7 +197,18 @@ async def process_alarms():
                 message = await dm_channel.send(f"{StaticData.get_value('phrases.timer')}\nIt's time to **{uncapitalize(alarm_name)}**!\n\nClick the checkmark to reset the alarm :)")
                 await message.add_reaction(Emoji.CHECK_MARK)
                 await reset_ringing_alarm_time(user_id, alarm_name, alarm_datetime)
-                await add_ringing_alarm_message(user_id, alarm_name, alarm_datetime, message.id)
+
+                if (user_id, alarm_name, alarm_datetime) not in Data.get_feature_data('alarm')['ringing_alarms']:
+                    Data.get_feature_data('alarm')['ringing_alarms'][(user_id, alarm_name, alarm_datetime)] = {
+                        'last_ring': time.time(),
+                        'messages': []
+                    }
+                Data.get_feature_data('alarm')['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]['messages'].append(
+                    message.id)
+                Data.get_feature_data('alarm')['alarm_message_mappings'][message.id] = (
+                    user_id, alarm_name, alarm_datetime)
+                await Data.request_save()
+
             await asyncio.sleep(10)
         except Exception:
             await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
@@ -195,7 +221,7 @@ async def remove_old_acknowledged_alarms(user_id, alarm_name, alarm_datetime):
         try:
             alarms_to_remove = []
             now = datetime.datetime.utcnow()
-            for alarm_id in Data.get_feature_data('alarm').get('acknowledged_alarms', {}):
+            for alarm_id in Data.get_feature_data('alarm')['acknowledged_alarms']:
                 if now - alarm_id[2] > datetime.timedelta(hours=StaticData.get_value('config.max_alarm_snooze_hours'), minutes=5):
                     alarms_to_remove.append(alarm_id)
             if len(alarms_to_remove) > 0:
@@ -210,35 +236,10 @@ async def remove_old_acknowledged_alarms(user_id, alarm_name, alarm_datetime):
 
 
 async def reset_ringing_alarm_time(user_id, alarm_name, alarm_datetime):
-    if (user_id, alarm_name, alarm_datetime) not in Data.get_feature_data('alarm').get('ringing_alarms', {}):
-        Data.get_feature_data('alarm').get('ringing_alarms', {})[(user_id, alarm_name, alarm_datetime)] = {
+    if (user_id, alarm_name, alarm_datetime) not in Data.get_feature_data('alarm')['ringing_alarms']:
+        Data.get_feature_data('alarm')['ringing_alarms'][(user_id, alarm_name, alarm_datetime)] = {
             'last_ring': time.time(),
             'messages': []
         }
-    Data.get_feature_data('alarm').get('ringing_alarms', {})[
-        (user_id, alarm_name, alarm_datetime)]['last_ring'] = time.time()
+    Data.get_feature_data('alarm')['ringing_alarms'][(user_id, alarm_name, alarm_datetime)]['last_ring'] = time.time()
     await Data.request_save()
-
-
-async def add_ringing_alarm_message(user_id, alarm_name, alarm_datetime, message_id):
-    if (user_id, alarm_name, alarm_datetime) not in Data.get_feature_data('alarm').get('ringing_alarms', {}):
-        Data.get_feature_data('alarm').get('ringing_alarms', {})[(user_id, alarm_name, alarm_datetime)] = {
-            'last_ring': time.time(),
-            'messages': []
-        }
-    Data.get_feature_data('alarm').get('ringing_alarms', {})[
-        (user_id, alarm_name, alarm_datetime)]['messages'].append(message_id)
-    Data.get_feature_data('alarm').get('alarm_message_mappings', {})[message_id] = (user_id, alarm_name, alarm_datetime)
-    await Data.request_save()
-
-
-def get_ringing_alarm_time(user_id, alarm_name, alarm_datetime):
-    return Data.get_feature_data('alarm').get('ringing_alarms', {}).get((user_id, alarm_name, alarm_datetime), {}).get('last_ring', 0)
-
-
-def get_ringing_alarm_messages(user_id, alarm_name, alarm_datetime):
-    return Data.get_feature_data('alarm').get('ringing_alarms', {}).get((user_id, alarm_name, alarm_datetime), {}).get('messages', [])
-
-
-def alarm_is_acknowledged(user_id, alarm_name, alarm_datetime):
-    return (user_id, alarm_name, alarm_datetime) in Data.get_feature_data('alarm').get('acknowledged_alarms', [])

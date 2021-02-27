@@ -1,6 +1,5 @@
 import importlib
 import os
-import traceback
 from asyncio.queues import Queue
 
 from base.feature import BaseFeature

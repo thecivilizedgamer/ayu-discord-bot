@@ -14,6 +14,9 @@ client = Client.get_client()
 @client.event
 async def on_ready():
     await Data.load_from_disk()
+    # Run initialization code for features. Necessary to, for example, fix inconsistencies that may be in data structs
+    for feature in Bot.features:
+        feature.initialize_feature()
     await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
         f"{capitalize(StaticData.get_value('config.command_word'))} is online!")
 

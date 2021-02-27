@@ -3,6 +3,10 @@ from data import Data
 
 class BaseFeature:
 
+    def initialize_feature(self):
+        # Post-data-load feature initialization
+        pass
+
     def get_feature_data(self):
         if self.data_access_key not in Data.data:
             Data.data[self.data_access_key] = {'users': {}, 'servers': {}, 'global': {}}
