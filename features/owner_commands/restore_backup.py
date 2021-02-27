@@ -15,7 +15,7 @@ class RestoreBackupFeature(BaseFeature):
 
     @property
     def command_keyword(self):
-        return 'restore'
+        return 'restore-backup'
 
     @property
     def owner_only(self):
