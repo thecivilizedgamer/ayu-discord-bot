@@ -1,6 +1,6 @@
 import os
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 
 
 class ListBackupsFeature(BaseFeature):

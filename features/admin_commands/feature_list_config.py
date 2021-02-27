@@ -1,6 +1,6 @@
 import pprint
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from bot import Bot
 
 

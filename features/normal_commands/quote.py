@@ -1,4 +1,4 @@
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from misc import capitalize
 from static_data import StaticData
 

@@ -1,6 +1,6 @@
 import random
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from bot import ConvoSubscription
 from data import Data
 from interface import get_next_response

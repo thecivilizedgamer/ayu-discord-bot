@@ -2,7 +2,7 @@ import importlib
 import os
 from asyncio.queues import Queue
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from client import Client
 from data import Data
 from static_data import StaticData

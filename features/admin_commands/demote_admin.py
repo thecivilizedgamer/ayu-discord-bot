@@ -1,4 +1,4 @@
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from client import Client
 from data import Data
 

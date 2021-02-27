@@ -1,7 +1,7 @@
 import random
 import time
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from data import Data
 from interface import prompt
 from misc import capitalize, seconds_to_string

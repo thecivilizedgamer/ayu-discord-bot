@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from bot import Bot
 from data import Data
 

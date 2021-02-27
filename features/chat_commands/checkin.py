@@ -1,4 +1,4 @@
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from bot import ConvoSubscription
 from interface import get_menu_selections, get_next_response, get_yes_no
 from misc import list_to_str, remove_all_punctuation

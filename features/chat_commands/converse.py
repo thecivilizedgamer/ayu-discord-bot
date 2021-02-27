@@ -1,6 +1,6 @@
 from statistics import mean
 
-from base.feature import BaseFeature
+from base_feature import BaseFeature
 from misc import remove_all_punctuation
 from static_data import StaticData
 
