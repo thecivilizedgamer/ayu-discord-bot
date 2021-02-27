@@ -42,7 +42,7 @@ class RestoreBackupFeature(BaseFeature):
         if not os.path.isfile(filename):
             await message.channel.send(f'File {filename} does not exist')
             return
-        backup_filename = f'save-{time.time()}.dmp'
+        backup_filename = f'save-{int(time.time())}.dmp'
         shutil.copy('save.dmp', backup_filename)  # Backup old save file
         await message.channel.send(f'Backed up current save file to {backup_filename}')
         await Data.load_from_disk(filename)
