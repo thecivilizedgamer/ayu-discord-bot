@@ -29,7 +29,7 @@ class AlarmListFeature(BaseFeature):
         return False
 
     async def command_execute(self, message, arguments):
-        alarms = Data.get_user_data_for_feature(message.author.id, 'alarm').get('alarms', {})
+        alarms = Data.get_user_data_for_feature(message.author.id, 'alarm')
         if len(alarms) == 0:
             await message.channel.send(f"You don't have any alarms set yet!")
         else:

@@ -30,7 +30,7 @@ class AlarmDeleteFeature(BaseFeature):
         return False
 
     async def command_execute(self, message, arguments):
-        alarms = Data.get_user_data_for_feature(message.author.id, 'alarm').get('alarms', {})
+        alarms = self.get_user_data(message.author.id)
         if len(alarms) == 0:
             await message.channel.send(f"You don't have any alarms for me to delete!")
             return
@@ -47,14 +47,8 @@ class AlarmDeleteFeature(BaseFeature):
         if alarm_name.lower() not in [x.lower() for x in alarm_names]:
             await message.channel.send(f"You don't have an alarm for that! Check your current alarms with `!{StaticData.get_value('config.command_word')} list-alarms`")
         else:
-            await delete_alarm(message.author.id, alarm_name)
+            mapping = {name.lower(): name for name in alarms.keys()}
+            del alarms[mapping[alarm_name.lower()]]
+            await Data.request_save()
+
             await message.channel.send(f"Ok, I'll forget about that alarm :)")
-
-
-async def delete_alarm(user_id, alarm_name):
-    alarms = Data.get_user_data_for_feature(user_id, 'alarm').get('alarms', {})
-    mapping = {name.lower(): name for name in alarms.keys()}
-    actual_name = mapping[alarm_name.lower()]
-    if actual_name in alarms:
-        del alarms[actual_name]
-    await Data.request_save()

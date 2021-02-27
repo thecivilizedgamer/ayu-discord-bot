@@ -55,10 +55,8 @@ class TimerDeleteFeature(BaseFeature):
         if timer_name.lower() not in [x.lower() for x in timers]:
             await message.channel.send(f"You don't have a timer for that!")
         else:
-
             mapping = {name.lower(): name for name in timers.keys()}
-            actual_name = mapping[timer_name.lower()]
-            del timers[actual_name]
+            del timers[mapping[timer_name.lower()]]
             await Data.request_save()
 
             await message.channel.send(f"Ok, I'll forget about that timer :)")
