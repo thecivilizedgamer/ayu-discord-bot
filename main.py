@@ -17,3 +17,10 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+'''
+IDEAS
+
+Command to show values in the static_data json files (but not the config.json values, because bot token)
+'''

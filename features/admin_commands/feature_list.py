@@ -44,13 +44,13 @@ class ServerFeatureListFeature(BaseFeature):
         if len(enabled_features) > 0:
             msg += f'Enabled Features:\n```'
             for feature in enabled_features:
-                msg += f'\n{feature.feature_name}'
-            msg += '```\n\n'
+                msg += f'\n{feature.feature_name}: {feature.get_brief_description(message.author.id, message.guild.id)}'
+            msg += '```\n'
 
         if len(disabled_features) > 0:
             msg += f'Disabled Features:\n```'
             for feature in disabled_features:
-                msg += f'{feature.feature_name}'
+                msg += f'\n{feature.feature_name}'
             msg += '```'
 
         if msg == '':

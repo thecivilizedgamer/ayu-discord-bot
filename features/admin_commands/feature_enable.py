@@ -41,6 +41,7 @@ class ServerFeatureEnableFeature(BaseFeature):
 
         server_features = Bot.get_server_only_features(
             message.guild.id, include_admin=True, include_owner=False, include_disabled=True)
+        server_feature_names = [x.feature_name for x in server_features]
 
         # Ignore hidden features and features that can't be disabled
         feature_names = [x.feature_name for x in server_features if not x.feature_hidden and x.can_be_disabled]
@@ -48,11 +49,11 @@ class ServerFeatureEnableFeature(BaseFeature):
         if feature_name not in feature_names:
             await message.channel.send(f"I'm sorry, either feature \"{feature_name}\" doesn't exist, or it can't be disabled in the first place")
         else:
-            feature = server_features[feature_names.index(feature_name)]
-            data = feature.get_server_data(message.guild.id)
-            if data['enabled']:
+            feature = server_features[server_feature_names.index(feature_name)]
+            enabled = feature.enabled_for_server(message.guild.id)
+            if enabled:
                 await message.channel.send(f"Feature is already enabled")
             else:
-                data['enabled'] = True
+                feature.enable_feature_for_server(message.guild.id)
                 await Data.request_save()
                 await message.channel.send(f"Feature has been enabled")

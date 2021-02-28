@@ -30,4 +30,8 @@ class DebugFeature(BaseFeature):
         return False
 
     async def command_execute(self, message, arguments):
-        await message.channel.send(f'```{pprint.pformat(Data.data)}```')
+        debug = pprint.pformat(Data.data)
+        while len(debug) > 1990:
+            await message.channel.send(f'```{debug[:1990]}```')
+            debug = debug[1990:]
+        await message.channel.send(f'```{debug}```')

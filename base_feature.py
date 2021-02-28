@@ -32,7 +32,27 @@ class BaseFeature:
         return Data.data['global'][user_id]
 
     def enabled_for_server(self, guild_id):
-        return self.get_server_data(guild_id)['enabled']
+        if self.enable_state_key not in Data.data:
+            Data.data[self.enable_state_key] = {'users': {}, 'servers': {}, 'global': {}}
+        if guild_id not in Data.data[self.enable_state_key]['servers']:
+            Data.data[self.enable_state_key]['servers'][guild_id] = {'enabled': True}
+        return Data.data[self.enable_state_key]['servers'][guild_id]['enabled']
+
+    def enable_feature_for_server(self, guild_id):
+        if self.enable_state_key not in Data.data:
+            Data.data[self.enable_state_key] = {'users': {}, 'servers': {}, 'global': {}}
+        if guild_id not in Data.data[self.enable_state_key]['servers']:
+            Data.data[self.enable_state_key]['servers'][guild_id] = {'enabled': True}
+        else:
+            Data.data[self.enable_state_key]['servers'][guild_id]['enabled'] = True
+
+    def disable_feature_for_server(self, guild_id):
+        if self.enable_state_key not in Data.data:
+            Data.data[self.enable_state_key] = {'users': {}, 'servers': {}, 'global': {}}
+        if guild_id not in Data.data[self.enable_state_key]['servers']:
+            Data.data[self.enable_state_key]['servers'][guild_id] = {'enabled': False}
+        else:
+            Data.data[self.enable_state_key]['servers'][guild_id]['enabled'] = False
 
     @property
     def feature_name(self):
@@ -45,6 +65,10 @@ class BaseFeature:
     @property
     def data_access_key(self):
         return self.feature_name
+
+    @property
+    def enable_state_key(self):
+        return self.data_access_key
 
     @property
     def admin_only(self):

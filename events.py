@@ -31,25 +31,29 @@ async def on_message(message):
     is_admin = False if is_dm else message.author.id in Data.get_server_data(message.guild.id)['administrators']
     is_owner = message.author.id == StaticData.get_value('config.owner_user_id')
 
-    # PRE-COMMAND ON-MESSAGE CALLBACKS
-    if message.guild is None:
-        # For features that are only applicable in DMs
-        for feature in Bot.get_dm_only_features(is_owner):
-            for callback in feature.on_message_first_callbacks:
-                if await callback(message) != CallbackResponse.CONTINUE:
-                    return
-    else:
-        # For features that are only applicable in servers
-        for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
-            for callback in feature.on_message_first_callbacks:
-                if await callback(message) != CallbackResponse.CONTINUE:
-                    return
+    try:
+        if message.guild is None:
+            # For features that are only applicable in DMs
+            for feature in Bot.get_dm_only_features(is_owner):
+                for callback in feature.on_message_first_callbacks:
+                    if await callback(message) != CallbackResponse.CONTINUE:
+                        return
+        else:
+            # For features that are only applicable in servers
+            for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
+                for callback in feature.on_message_first_callbacks:
+                    if await callback(message) != CallbackResponse.CONTINUE:
+                        return
 
-    # For features that are applicable in both servers and DMs
-    for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
-        for callback in feature.on_message_first_callbacks:
-            if await callback(message) != CallbackResponse.CONTINUE:
-                return
+        # For features that are applicable in both servers and DMs
+        for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
+            for callback in feature.on_message_first_callbacks:
+                if await callback(message) != CallbackResponse.CONTINUE:
+                    return
+    except Exception:
+        user = await User.get_user(message.author.id)
+        await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
+            f'ERROR: Failed while processing command `{message.content}` from user {user}: ```{traceback.format_exc()}```')
 
     # If message is part of bot conversation
     if len(Bot.convo_subscribers.get(message.author.id, [])) > 0 and \
@@ -89,24 +93,29 @@ async def on_message(message):
                             "I'm sorry, something went wrong! Double-check what you typed and try again?")
                         return
 
-    if message.guild is None:
-        # For features that are only applicable in DMs
-        for feature in Bot.get_dm_only_features(is_owner):
-            for callback in feature.on_message_last_callbacks:
-                if await callback(message) != CallbackResponse.CONTINUE:
-                    return
-    else:
-        # For features that are only applicable in servers
-        for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
-            for callback in feature.on_message_last_callbacks:
-                if await callback(message) != CallbackResponse.CONTINUE:
-                    return
+    try:
+        if message.guild is None:
+            # For features that are only applicable in DMs
+            for feature in Bot.get_dm_only_features(is_owner):
+                for callback in feature.on_message_last_callbacks:
+                    if await callback(message) != CallbackResponse.CONTINUE:
+                        return
+        else:
+            # For features that are only applicable in servers
+            for feature in Bot.get_server_only_features(message.guild.id, is_admin, is_owner):
+                for callback in feature.on_message_last_callbacks:
+                    if await callback(message) != CallbackResponse.CONTINUE:
+                        return
 
-    # For features that are applicable in both servers and DMs
-    for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
-        for callback in feature.on_message_last_callbacks:
-            if await callback(message) != CallbackResponse.CONTINUE:
-                return
+        # For features that are applicable in both servers and DMs
+        for feature in Bot.get_global_features(None if message.guild is None else message.guild.id, is_admin, is_owner):
+            for callback in feature.on_message_last_callbacks:
+                if await callback(message) != CallbackResponse.CONTINUE:
+                    return
+    except Exception:
+        user = await User.get_user(message.author.id)
+        await client.get_channel(StaticData.get_value('config.debug_channel_id')).send(
+            f'ERROR: Failed while processing command `{message.content}` from user {user}: ```{traceback.format_exc()}```')
 
 
 @client.event
